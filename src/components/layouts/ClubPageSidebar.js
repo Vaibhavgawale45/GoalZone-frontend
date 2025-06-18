@@ -1,134 +1,192 @@
-// client/src/components/layout/ClubPageSidebar.js
-import React from 'react';
-import { NavLink, useLocation as useRouterLocationHook } from 'react-router-dom'; // Import useLocation
+import React, { useState, useEffect } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext.js';
 
-const Icon = ({ char, color = "text-indigo-300" }) => <span className={`w-6 h-6 mr-3 flex items-center justify-center ${color} group-hover:text-white transition-colors`} aria-hidden="true">{char}</span>;
+const ProfileIconChar = "👤";
+const PaymentSettingsIconChar = "💰";
+const PaymentsDashboardIconChar = "📊"; // New Icon
+const PendingIconChar = "⏳";
+const MyClubDashboardIconChar = "🏠";
+const ManagePlayersIconChar = "👥";
+const SendNotificationsIconChar = "🔔";
+const ClubSettingsIconChar = "⚙️";
+const ViewingClubIconChar = "👁️";
+const BrowseClubsIconChar = "🔍";
+const GeneralCoachDashboardIconChar = "📋";
 
-const ClubPageSidebar = ({ clubId, clubManagerId }) => {
+const HamburgerIcon = () => (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path>
+    </svg>
+);
+
+const CloseIcon = () => (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+    </svg>
+);
+
+const SidebarIcon = ({ char, isActive }) => ( 
+  <span 
+    className={`
+      w-6 h-6 mr-3 flex items-center justify-center text-xl
+      transition-colors duration-150
+      ${isActive ? 'text-white' : 'text-slate-500 group-hover:text-sky-600'} 
+    `} 
+    aria-hidden="true"
+  >
+    {char}
+  </span>
+);
+
+const needsExactMatch = (item, coachManagedClubId) => {
+  const exactPaths = [
+    '/coach/profile',
+    '/coach/payment-settings',
+    '/coach/payments',
+    '/clubs',
+    '/coach/dashboard',
+    `/club/${coachManagedClubId}/dashboard`
+  ];
+  return exactPaths.includes(item.path) || (item.id && item.id.startsWith('viewing-club-'));
+};
+
+const isLinkEffectivelyActive = (item, location, coachManagedClubId, isNaturallyActive) => {
+  if (isNaturallyActive) return true;
+  if (!coachManagedClubId) return false;
+
+  const parentPaths = [
+    `/coach/club/${coachManagedClubId}/manage-players`,
+    `/coach/club/${coachManagedClubId}/send-notifications`,
+    `/coach/club/${coachManagedClubId}/settings`
+  ];
+
+  return parentPaths.some(parentPath => 
+    item.path === parentPath && location.pathname.startsWith(parentPath)
+  );
+};
+
+const ClubPageSidebar = ({ clubId: clubIdInViewContext }) => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user } = useAuth();
-  const location = useRouterLocationHook(); // <<< FIX: Use the hook
+  const location = useLocation(); 
 
-  if (!user && !clubId) {
-    return null;
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
+
+  if (!user || user.role !== 'Coach') {
+    return null; 
   }
 
-  let menuItems = [];
-  const isGuest = !user; // Though guests won't see this if outer component checks `!!user`
-  const role = user?.role;
-  const userId = user?._id;
-  const isApprovedCoach = role === 'Coach' && user?.isApproved;
-  const isManagingThisClub = isApprovedCoach && clubId && user?.managedClub?._id === clubId;
+  const isApprovedCoach = user.isApproved;
+  const coachManagedClubId = user.managedClub?._id; 
 
-  // --- Define Base Menu Items ---
-  const basePublicItems = [
-    { name: 'Club Home', path: `/club/${clubId}`, icon: () => <Icon char="🏠" />, exact: true },
-    { name: 'Browse All Clubs', path: `/`, icon: () => <Icon char="🔍" /> },
+  const allMenuItems = [
+    { name: 'My Profile', path: '/coach/profile', iconChar: ProfileIconChar, id: 'coach-profile', show: true },
+    { name: 'Payment Settings', path: '/coach/payment-settings', iconChar: PaymentSettingsIconChar, id: 'payment-settings', show: true },
+    { name: 'Payments Dashboard', path: '/coach/payments', iconChar: PaymentsDashboardIconChar, id: 'payments-dashboard', show: isApprovedCoach && coachManagedClubId },
+    { name: 'Approval Pending', path: '#!', iconChar: PendingIconChar, id: 'pending-approval', nonClickable: true, show: !isApprovedCoach },
+    { name: 'My Club Dashboard', path: `/club/${coachManagedClubId}/dashboard`, iconChar: MyClubDashboardIconChar, id: 'my-club-dashboard', show: isApprovedCoach && coachManagedClubId },
+    { name: 'Manage Players', path: `/coach/club/${coachManagedClubId}/manage-players`, iconChar: ManagePlayersIconChar, id: 'manage-players', show: isApprovedCoach && coachManagedClubId },
+    { name: 'Send Club Notifications', path: `/coach/club/${coachManagedClubId}/send-notifications`, iconChar: SendNotificationsIconChar, id: 'send-club-notifications', show: isApprovedCoach && coachManagedClubId },
+    { name: 'My Club Settings', path: `/coach/club/${coachManagedClubId}/settings`, iconChar: ClubSettingsIconChar, id: 'my-club-settings', show: isApprovedCoach && coachManagedClubId },
+    { name: 'Coach Dashboard', path: '/coach/dashboard', iconChar: GeneralCoachDashboardIconChar, id: 'general-coach-dashboard', show: isApprovedCoach && !coachManagedClubId },
+    { name: 'Viewing Other Club', path: `/club/${clubIdInViewContext}`, iconChar: ViewingClubIconChar, id: `viewing-club-${clubIdInViewContext}`, show: clubIdInViewContext && clubIdInViewContext !== coachManagedClubId },
+    { name: 'Browse All Clubs', path: `/clubs`, iconChar: BrowseClubsIconChar, id: 'browse-clubs', show: true },
   ];
 
-  const playerItems = [
-    { name: 'My Dashboard', path: '/player/dashboard', icon: () => <Icon char="📊" /> },
-    { name: 'My Profile', path: '/profile', icon: () => <Icon char="👤" /> },
-    { name: 'My Club Payments', path: `/player/club/${clubId}/payments`, icon: () => <Icon char="💳" />, clubSpecific: true },
-    { name: 'My Club History', path: `/player/club/${clubId}/history`, icon: () => <Icon char="📜" />, clubSpecific: true },
-  ];
+  const visibleMenuItems = allMenuItems.filter(item => item.show);
 
-  const managingCoachItems = [
-    { name: 'Club Overview', path: `/club/${clubId}`, icon: () => <Icon char="🏠" />, exact: true },
-    { name: 'My Profile', path: '/profile', icon: () => <Icon char="👤" /> },
-    { name: 'Manage Players', path: `/coach/dashboard/club/${clubId}/players`, icon: () => <Icon char="👥" /> },
-    { name: 'Club Settings', path: `/club/${clubId}/settings`, icon: () => <Icon char="⚙️" /> },
-    { name: 'View Enrollments', path: `/coach/dashboard/club/${clubId}/enrollments`, icon: () => <Icon char="📈" /> },
-    { name: 'Browse All Clubs', path: `/`, icon: () => <Icon char="🔍" /> },
-  ];
-  
-  const adminItems = [
-    { name: 'Admin Dashboard', path: '/admin/dashboard', icon: () => <Icon char="🛡️" /> },
-    { name: 'Viewing Club:', path: `/club/${clubId}`, icon: () => <Icon char="👁️" />, exact: true, isCurrentClub: true },
-    { name: 'Edit This Club (Admin)', path: `/admin/clubs/${clubId}/edit`, icon: () => <Icon char="✏️" /> },
-    { name: 'Manage All Users', path: '/admin/manage-users', icon: () => <Icon char="👥" /> },
-    { name: 'Manage All Clubs', path: '/admin/manage-clubs', icon: () => <Icon char="🏟️" /> },
-    { name: 'My Profile', path: '/profile', icon: () => <Icon char="👤" /> },
-  ];
-
-  // --- Determine Menu Based on Role ---
-  if (isGuest && clubId) { // Only show very basic if guest AND on a club page
-    menuItems = basePublicItems.filter(item => item.clubSpecific !== false || clubId);
-  } else if (role === 'Player') {
-    menuItems = [...playerItems.filter(item => !item.clubSpecific || clubId)];
-    if (clubId) menuItems.unshift({ name: 'Club Home', path: `/club/${clubId}`, icon: () => <Icon char="🏠" />, exact: true });
-    menuItems.push({ name: 'Browse All Clubs', path: `/`, icon: () => <Icon char="🔍" /> });
-  } else if (role === 'Coach') {
-    if (isManagingThisClub && clubId) {
-        menuItems = [...managingCoachItems];
-    } else { 
-        menuItems.push({ name: 'My Profile', path: '/profile', icon: () => <Icon char="👤" /> });
-        if (user.managedClub?._id) {
-             menuItems.push({ name: 'Go To My Club', path: `/club/${user.managedClub._id}`, icon: () => <Icon char="🛠️" />});
-        } else {
-            menuItems.push({ name: 'Coach Area', path: '/coach/dashboard', icon: () => <Icon char="📋" /> });
-        }
-        if (clubId) menuItems.unshift({ name: 'Viewing Club', path: `/club/${clubId}`, icon: () => <Icon char="🏠" />, exact: true });
-        menuItems.push({ name: 'Browse All Clubs', path: `/`, icon: () => <Icon char="🔍" /> });
-    }
-  } else if (role === 'Admin') {
-    if (clubId) menuItems = [...adminItems];
-    else { // Admin on a non-club page
-        menuItems = [
-            { name: 'Admin Dashboard', path: '/admin/dashboard', icon: () => <Icon char="🛡️" />, exact: true },
-            { name: 'Manage Users', path: '/admin/manage-users', icon: () => <Icon char="👥" />},
-            { name: 'Manage Clubs', path: '/admin/manage-clubs', icon: () => <Icon char="🏟️" />},
-            { name: 'My Profile', path: '/profile', icon: () => <Icon char="👤" /> },
-            { name: 'Browse Clubs', path: `/`, icon: () => <Icon char="🔍" />}
-        ];
-    }
-  }
-  
-  const uniqueMenuItemsByPath = menuItems.reduce((acc, current) => {
-    if (current && current.path && !acc.find(item => item.path === current.path)) {
-      return acc.concat([current]);
-    }
-    return acc;
-  }, []);
-
-
-  if (uniqueMenuItemsByPath.length === 0 && !isGuest) { // If no items, but user is logged in, show a basic profile link
-      if (user?.role) { // Check if user and role exist
-        uniqueMenuItemsByPath.push({ name: 'My Profile', path: '/profile', icon: () => <Icon char="👤" /> });
-        if(user.role !== 'Admin') uniqueMenuItemsByPath.push({ name: 'Browse All Clubs', path: `/`, icon: () => <Icon char="🔍" /> });
-      } else {
-          return null; // Truly no user to show a profile link for
-      }
-  }
-  if (uniqueMenuItemsByPath.length === 0 && isGuest) return null;
-
+  const navLinkBaseStyles = "flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-all duration-150 group focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-100";
+  const activeNavLinkStyles = "bg-sky-600 text-white shadow-sm";
+  const inactiveNavLinkStyles = "text-slate-600 hover:bg-slate-200 hover:text-sky-700";
 
   return (
-    <div className="w-full bg-gray-800 text-gray-100 p-4 space-y-1 h-full print:hidden">
-      <div className="px-2 mb-4">
-        <h3 className="text-lg sm:text-xl font-semibold text-indigo-300 select-none">Navigation</h3>
-        {user && <p className="text-xs text-gray-400">Role: {user.role}</p>}
-      </div>
-      <nav className="space-y-1">
-        {uniqueMenuItemsByPath.map((item) => (
-          <NavLink
-            key={item.name + item.path}
-            to={item.path}
-            end={item.exact}
-            className={({ isActive }) =>
-              `flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors duration-150 group focus:outline-none focus:ring-2 focus:ring-indigo-400
-               ${isActive || (item.isCurrentClub && location.pathname === item.path) // <<< FIX: Use 'location' from hook
-                 ? 'bg-indigo-600 text-white shadow-lg ring-2 ring-indigo-400 ring-offset-1 ring-offset-gray-800'
-                 : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-               }`
+    <>
+      <button
+        className="sm:hidden fixed top-0 left-0 z-[70] h-16 w-16 flex items-center justify-center text-slate-600 hover:text-sky-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-sky-500"
+        onClick={() => setIsMobileMenuOpen(true)}
+        aria-label="Open coach menu"
+      >
+        <HamburgerIcon />
+      </button>
+
+      {isMobileMenuOpen && (
+        <div 
+          className="sm:hidden fixed inset-0 bg-black bg-opacity-50 z-[80]"
+          onClick={() => setIsMobileMenuOpen(false)}
+          aria-hidden="true"
+        ></div>
+      )}
+
+      <div 
+        className={`
+          flex flex-col h-full print:hidden
+          bg-slate-50 text-slate-700 border-r border-slate-200
+          
+          fixed top-0 left-0 w-72 p-4 shadow-xl z-[90]
+          transition-transform duration-300 ease-in-out
+          ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+
+          sm:relative sm:w-full sm:p-4 sm:shadow-sm sm:translate-x-0
+        `}
+      >
+        <div className="flex items-center justify-between px-2 mb-4 pt-2">
+            <div>
+              <h3 className="text-lg font-semibold text-sky-700 select-none tracking-wide">
+                Coach Menu
+              </h3>
+              <p className="text-sm text-slate-500 mt-0.5">
+                {isApprovedCoach 
+                  ? (coachManagedClubId ? `Managing Club` : "Approved") 
+                  : "Pending Approval"}
+              </p>
+            </div>
+            <button
+              className="sm:hidden text-slate-500 hover:text-slate-800"
+              onClick={() => setIsMobileMenuOpen(false)}
+              aria-label="Close menu"
+            >
+              <CloseIcon />
+            </button>
+        </div>
+
+        <nav className="flex-grow space-y-1.5 overflow-y-auto pr-1 -mr-2">
+          {visibleMenuItems.map((item) => {
+            if (item.nonClickable) {
+              return (
+                <div
+                  key={item.id}
+                  className={`${navLinkBaseStyles} text-slate-400 cursor-not-allowed opacity-70`}
+                >
+                  <SidebarIcon char={item.iconChar} isActive={false} /> 
+                  <span>{item.name}</span>
+                </div>
+              );
             }
-          >
-            <item.icon />
-            {item.name}
-          </NavLink>
-        ))}
-      </nav>
-    </div>
+
+            return (
+              <NavLink
+                key={item.id}
+                to={item.path}
+                end={needsExactMatch(item, coachManagedClubId)}
+              >
+                {({ isActive: isNaturallyActive }) => {
+                  const isActive = isLinkEffectivelyActive(item, location, coachManagedClubId, isNaturallyActive);
+                  return (
+                    <div className={`${navLinkBaseStyles} ${isActive ? activeNavLinkStyles : inactiveNavLinkStyles}`}>
+                      <SidebarIcon char={item.iconChar} isActive={isActive} /> 
+                      <span className="truncate">{item.name}</span>
+                    </div>
+                  );
+                }}
+              </NavLink>
+            );
+          })}
+        </nav>
+      </div>
+    </>
   );
 };
 

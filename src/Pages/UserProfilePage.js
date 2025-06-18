@@ -2,33 +2,39 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext.js';
 import api from '../services/api.js';
-import { useNavigate } from 'react-router-dom';
-import UserProfileEditModal from '../components/user/UserProfileEditModal.js'; // We'll create this
+import { useNavigate, useLocation } from 'react-router-dom';
+import UserProfileEditModal from '../components/user/UserProfileEditModal.js';
 
-// Placeholder Icons (replace with a real icon library if desired)
-const ProfileIcon = ({ className = "w-6 h-6" }) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>;
-const EmailIcon = ({ className = "w-5 h-5" }) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}><path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" /></svg>;
-const PhoneIcon = ({ className = "w-5 h-5" }) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 6.75z" /></svg>;
-const CalendarIcon = ({ className = "w-5 h-5" }) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12v-.008z" /></svg>;
-const TrophyIcon = ({ className = "w-5 h-5" }) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-4.5A3 3 0 0012 9.75h0A3 3 0 007.5 14.25v4.5m9.375-3.188A2.625 2.625 0 1115 15.062a2.625 2.625 0 015.25 0c0 .654-.221 1.253-.598 1.751L15 21.75H9.375c-.377 0-.728-.155-.98-.402L3.598 16.813a2.625 2.625 0 01-.597-1.751 2.625 2.625 0 015.25 0 2.625 2.625 0 01-.598 1.751L3 21.75m18-18L9 3m12 0L9 3M6 21.75L9 3" /></svg>;
-const InfoIcon = ({ className = "w-5 h-5" }) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}><path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" /></svg>;
-const StarIcon = ({ className = "w-5 h-5" }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}><path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354l-4.543 2.86c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clipRule="evenodd" /></svg>;
+// --- Import Icons from the utility file ---
+import {
+  UserCircleIcon,
+  EnvelopeIcon,
+  PhoneIcon,
+  CalendarDaysIcon,
+  TrophyIcon,
+  InformationCircleIcon,
+  StarIcon,
+  PencilSquareIcon,
+} from '../utils/iconUtils.js'; // Adjust path if needed
+// --- End Icon Imports ---
 
-
+// ... rest of UserProfilePage.js code remains the same ...
+// (The createIcon and SVG definitions are removed from this file now)
+// ...
 const UserProfilePage = () => {
   const { user: authUser, setUser: setAuthUser, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const [profileData, setProfileData] = useState(null); // Will hold the user data to display
+  const [profileData, setProfileData] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [loading, setLoading] = useState(true); // For initial profile fetch
-  const [error, setError] = useState(''); // For fetch errors
-  // Success message for updates can be handled within the modal or via a toast library
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   const fetchProfile = useCallback(async () => {
     setLoading(true); setError('');
     try {
-      const response = await api.get('/users/profile'); // Fetches current user's profile
+      const response = await api.get('/users/profile');
       setProfileData(response.data);
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to fetch profile.');
@@ -41,121 +47,170 @@ const UserProfilePage = () => {
     if (!authLoading && authUser) {
       fetchProfile();
     } else if (!authLoading && !authUser) {
-      navigate('/login', { replace: true });
+      navigate('/login', { replace: true, state: { from: location } });
     }
-  }, [authUser, authLoading, fetchProfile, navigate]);
+  }, [authUser, authLoading, fetchProfile, navigate, location]);
 
   const handleProfileUpdated = (updatedUserData) => {
-    setProfileData(updatedUserData); // Update displayed profile data
-    setAuthUser(prev => ({ ...prev, ...updatedUserData })); // Update AuthContext
-    setIsEditModalOpen(false); // Close modal
-    // Optionally show a success message/toast here
+    setProfileData(updatedUserData);
+    setAuthUser(prev => ({ 
+      ...prev, 
+      ...updatedUserData,
+      ...(updatedUserData.imageUrl && { imageUrl: updatedUserData.imageUrl }) 
+    }));
+    setIsEditModalOpen(false);
   };
 
-  const ProfileDetailItem = ({ icon: IconComponent, label, value, valueClass = "text-gray-700" }) => (
-    value || value === 0 ? ( // Check for 0 in case of rating
-      <div className="flex items-center space-x-3 py-3">
-        <IconComponent className="w-5 h-5 text-indigo-500 flex-shrink-0" />
-        <div>
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">{label}</p>
-            <p className={`text-sm sm:text-base ${valueClass}`}>{value}</p>
+  const ProfileDetailItem = ({ icon: IconComponent, label, value, valueClass = "text-slate-800", fullWidth = false, children }) => {
+    if (!(value || value === 0 || typeof value === 'boolean' || children)) return null;
+    return (
+      <div className={`py-4 sm:py-5 ${fullWidth ? 'sm:col-span-2' : ''}`}>
+        <div className="flex items-start space-x-4">
+          {IconComponent && <IconComponent className="w-6 h-6 text-sky-600 flex-shrink-0 mt-1" />}
+          <div className="flex-1">
+            <p className="text-sm text-slate-500 font-medium uppercase tracking-wider">{label}</p>
+            {children ? (
+                <div className={`text-base md:text-lg ${valueClass} break-words mt-1`}>{children}</div>
+            ) : (
+                <p className={`text-base md:text-lg ${valueClass} break-words mt-1`}>{String(value)}</p>
+            )}
+          </div>
         </div>
       </div>
-    ) : null
-  );
-
+    );
+  };
 
   if (authLoading || loading || !profileData) {
-    return <div className="flex-center-screen"><div className="spinner"></div><p className="loading-text">Loading Your Profile...</p></div>;
+    return ( 
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] p-6 text-center">
+        <div role="status">
+            <svg aria-hidden="true" className="w-12 h-12 text-slate-300 animate-spin dark:text-slate-600 fill-sky-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
+                <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0492C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="currentFill"/>
+            </svg>
+            <span className="sr-only">Loading...</span>
+        </div>
+        <p className="text-xl font-semibold text-slate-700 mt-5">Loading Your Profile...</p>
+      </div>
+    );
+  }
+  
+  if (error) {
+    return ( 
+       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] p-6 text-center">
+        <InformationCircleIcon className="w-20 h-20 text-red-500 mb-5" />
+        <p className="text-3xl font-semibold text-red-700 mb-3">Oops! An Error Occurred</p>
+        <p className="text-slate-600 text-lg mb-8 max-w-md">{error}</p>
+        <button 
+          onClick={fetchProfile} 
+          className="px-8 py-3 text-base font-medium text-white bg-sky-600 rounded-lg shadow-md hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-colors"
+        >
+          Try Again
+        </button>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto max-w-4xl p-4 sm:p-6 lg:p-8">
-      {error && <p className="error-banner mb-6">{error}</p>}
-      
-      <div className="bg-white shadow-2xl rounded-xl overflow-hidden">
-        {/* Profile Header */}
-        <div className="bg-gradient-to-br from-indigo-600 to-purple-600 p-6 sm:p-8 text-white">
-          <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
+    <div className="max-w-4xl mx-auto py-10 sm:py-16 px-4 sm:px-6 lg:px-8">
+      <div className="bg-white shadow-xl rounded-2xl overflow-hidden">
+        <div className="bg-slate-100 p-8 sm:p-10 border-b border-slate-200">
+          <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
             <img
-              src={profileData.imageUrl || 'https://via.placeholder.com/120x120.png?text=User'}
+              src={profileData.imageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(profileData.name || 'U')}&background=EBF4FF&color=3B82F6&size=160&font-size=0.5&bold=true`}
               alt={`${profileData.name}'s profile`}
-              className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-4 border-indigo-300 shadow-lg"
+              className="w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-full object-cover border-4 border-white shadow-lg flex-shrink-0"
             />
-            <div className="text-center sm:text-left">
-              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">{profileData.name}</h1>
-              <p className="text-indigo-200 text-lg">{profileData.role}</p>
-              <p className="text-sm text-indigo-100 mt-1">{profileData.email}</p>
+            <div className="text-center md:text-left flex-grow mt-4 md:mt-0">
+              <h1 className="text-3xl sm:text-4xl font-bold text-slate-800 tracking-tight">{profileData.name}</h1>
+              <p className="text-sky-600 text-lg font-medium capitalize mt-1">{profileData.role}</p>
+              {profileData.email && 
+                <div className="flex items-center justify-center md:justify-start text-base text-slate-500 mt-2">
+                    <EnvelopeIcon className="w-5 h-5 mr-2.5 text-slate-400" /> {profileData.email}
+                </div>
+              }
             </div>
-            <div className="sm:ml-auto pt-4 sm:pt-0">
+            <div className="flex-shrink-0 mt-6 md:mt-0 w-full md:w-auto">
               <button 
                 onClick={() => setIsEditModalOpen(true)} 
-                className="btn-primary bg-white text-indigo-600 hover:bg-indigo-50 focus:ring-white w-full sm:w-auto"
+                className="flex items-center justify-center w-full md:w-auto px-6 py-3 text-base font-medium text-white bg-sky-600 rounded-lg shadow-md hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-colors"
               >
+                <PencilSquareIcon className="w-5 h-5 mr-2.5" />
                 Edit Profile
               </button>
             </div>
           </div>
         </div>
 
-        {/* Profile Details Body */}
-        <div className="p-6 sm:p-8 space-y-6">
-            
-            {/* General Info Section */}
+        <div className="p-8 sm:p-10 space-y-10">
             <section>
-                <h2 className="text-xl font-semibold text-gray-800 mb-3 border-b pb-2">Personal Information</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2">
+                <h2 className="text-xl sm:text-2xl font-semibold text-slate-700 mb-6 border-b border-slate-200 pb-3">Personal Information</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-2">
                     <ProfileDetailItem icon={PhoneIcon} label="Phone" value={profileData.phone || "Not provided"} />
-                    <ProfileDetailItem icon={CalendarIcon} label="Date of Birth" value={profileData.dob ? new Date(profileData.dob).toLocaleDateString() : "Not provided"} />
-                    {profileData.age !== null && <ProfileDetailItem icon={ProfileIcon} label="Age" value={`${profileData.age} years old`} />}
-                    <ProfileDetailItem icon={TrophyIcon} label="Experience" value={profileData.experience || (profileData.role === 'Coach' ? "Not specified" : "Not specified")} />
+                    <ProfileDetailItem icon={CalendarDaysIcon} label="Date of Birth" value={profileData.dob ? new Date(profileData.dob).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : "Not provided"} />
+                    {profileData.age !== undefined && profileData.age !== null && <ProfileDetailItem icon={UserCircleIcon} label="Age" value={`${profileData.age} years old`} />}
+                    <ProfileDetailItem icon={TrophyIcon} label="Experience" value={profileData.experience || "Not specified"} />
                 </div>
                 {profileData.bio && (
-                    <div className="mt-4">
-                        <ProfileDetailItem icon={InfoIcon} label="Bio" value={profileData.bio} />
+                    <div className="mt-6">
+                        <ProfileDetailItem icon={InformationCircleIcon} label="Bio" fullWidth>
+                            <p className="whitespace-pre-wrap text-slate-700 leading-relaxed">{profileData.bio}</p>
+                        </ProfileDetailItem>
                     </div>
                 )}
             </section>
 
-            {/* Player Specific Details */}
             {profileData.role === 'Player' && (
-                <section className="pt-6 border-t mt-6">
-                    <h2 className="text-xl font-semibold text-gray-800 mb-3 border-b pb-2">Player Attributes</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-2">
-                        <ProfileDetailItem icon={InfoIcon} label="Position" value={profileData.position || "Not specified"} />
-                        <ProfileDetailItem icon={InfoIcon} label="Primary Skill" value={profileData.skill || "Not specified"} />
+                <section className="pt-8 border-t border-slate-200">
+                    <h2 className="text-xl sm:text-2xl font-semibold text-slate-700 mb-6 border-b border-slate-200 pb-3">Player Attributes</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-x-10 gap-y-2">
+                        <ProfileDetailItem icon={UserCircleIcon} label="Position" value={profileData.position || "Not specified"} />
+                        <ProfileDetailItem icon={TrophyIcon} label="Primary Skill" value={profileData.skill || "Not specified"} />
                         <ProfileDetailItem 
                             icon={StarIcon} 
                             label="Rating" 
-                            value={profileData.rating !== null ? `${profileData.rating.toFixed(1)} / 5.0` : "Not rated"} 
-                            valueClass={profileData.rating !== null ? "text-yellow-500 font-bold" : "text-gray-500"}
-                        />
+                            valueClass={profileData.rating !== null && profileData.rating !== undefined ? "text-amber-500 font-semibold" : "text-slate-500"}
+                        >
+                            {profileData.rating !== null && profileData.rating !== undefined 
+                                ? <span className="text-xl">{profileData.rating.toFixed(1)} / 5.0</span>
+                                : "Not rated"}
+                        </ProfileDetailItem>
                     </div>
                 </section>
             )}
-             {/* Coach Specific Details (if any beyond experience/bio) could go here */}
+
+            {profileData.role === 'Coach' && (
+                <section className="pt-8 border-t border-slate-200">
+                    <h2 className="text-xl sm:text-2xl font-semibold text-slate-700 mb-6 border-b border-slate-200 pb-3">Coach Information</h2>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10">
+                        <ProfileDetailItem 
+                            icon={InformationCircleIcon} 
+                            label="Approval Status" 
+                            valueClass={profileData.isApproved ? "text-green-600 font-semibold" : "text-orange-500 font-semibold"}
+                        >
+                            {profileData.isApproved ? "Approved" : "Pending Approval"}
+                        </ProfileDetailItem>
+                        {profileData.managedClub && (
+                            <ProfileDetailItem 
+                                icon={UserCircleIcon}
+                                label="Managed Club" 
+                                value={profileData.managedClub.name || "Not Assigned"} 
+                            />
+                        )}
+                    </div>
+                </section>
+            )}
         </div>
       </div>
 
-      {/* Edit Profile Modal */}
       {isEditModalOpen && (
         <UserProfileEditModal
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
-          currentUserData={profileData} // Pass current data to pre-fill modal
+          currentUserData={profileData}
           onProfileUpdated={handleProfileUpdated}
         />
       )}
-
-      <style jsx global>{`
-        /* Add relevant global styles here or ensure they are in index.css */
-        .flex-center-screen { display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: calc(100vh - 8rem); }
-        .spinner { /* ... */ } .loading-text { /* ... */ }
-        .error-banner { /* ... */ } .success-banner { /* ... */ }
-        .btn-primary { @apply px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors; }
-        .btn-secondary { @apply px-5 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg shadow-sm hover:bg-gray-200 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors; }
-        .input-style { /* ... */ } .label-style { /* ... */ }
-      `}</style>
     </div>
   );
 };
