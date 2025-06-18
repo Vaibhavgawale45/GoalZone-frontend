@@ -275,6 +275,7 @@ const Navbar = ({ registerPushNotifications }) => {
                 ) : (
                   <div className="space-x-2">
                     <Link to="/login" className={`${navLinkBaseClass} text-slate-700 hover:bg-slate-100 hover:text-sky-600`}>Login</Link>
+                    <Link to="/admin/login" className={`${navLinkBaseClass} text-slate-700 hover:bg-slate-100 hover:text-sky-600`}>Admin</Link>
                     <Link to="/register" className="ml-2 inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-sky-600 rounded-lg shadow-sm hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-colors">Register</Link>
                   </div>
                 ))}
