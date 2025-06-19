@@ -26,24 +26,23 @@ const PayAndEnrollModal = ({ isOpen, onClose, club, platformFee, onConfirmEnroll
     const clubFee = (club.groundFees?.amount || 0) + (club.coachingFees?.amount || 0);
     const platformFeeWithGst = platformFee + Math.round(platformFee * 0.18);
     const totalFees = clubFee + platformFeeWithGst;
-    const currency = 'INR';
-
+    
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] flex justify-center items-center p-4 transition-opacity duration-300">
-            <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md transform transition-all duration-300 scale-100">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] flex justify-center items-center p-4">
+            <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
                 <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold text-slate-800">Enroll in {club.name}</h2>
+                    <h2 className="text-xl font-semibold text-slate-800">Online Payment for {club.name}</h2>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100"><CloseIcon /></button>
                 </div>
                 <div className="space-y-3 text-sm text-slate-700 mb-6">
-                    {clubFee > 0 && <div className="flex justify-between"><span>Club Fees (Ground + Coaching):</span><span className="font-medium">{clubFee.toLocaleString()} {currency}</span></div>}
+                    {clubFee > 0 && <div className="flex justify-between"><span>Club Fees:</span><span className="font-medium">{clubFee.toLocaleString()} {currency}</span></div>}
                     {platformFee > 0 && <div className="flex justify-between"><span>Platform Fee (incl. taxes):</span><span className="font-medium">{platformFeeWithGst.toLocaleString()} {currency}</span></div>}
                     <div className="flex justify-between border-t pt-3 mt-3 font-semibold text-base"><span>Total Payable:</span><span>{totalFees.toLocaleString()} {currency}</span></div>
-                    {totalFees === 0 && <p className="text-center text-green-600 font-medium py-2">This club currently has no fees for enrollment!</p>}
+                    {totalFees === 0 && <p className="text-center text-green-600 font-medium py-2">This is a free enrollment!</p>}
                 </div>
                 <div className="flex justify-end space-x-3">
-                    <button type="button" onClick={onClose} disabled={processingEnrollment} className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:opacity-70">Cancel</button>
-                    <button type="button" onClick={onConfirmEnrollment} disabled={processingEnrollment} className="px-4 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 flex items-center disabled:bg-sky-400 disabled:cursor-not-allowed">
+                    <button type="button" onClick={onClose} disabled={processingEnrollment} className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md border border-slate-300">Cancel</button>
+                    <button type="button" onClick={onConfirmEnrollment} disabled={processingEnrollment} className="px-4 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-md flex items-center disabled:bg-sky-400 disabled:cursor-not-allowed">
                          {processingEnrollment ? (
                             <><span className="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full"></span><span>Processing...</span></>
                          ) : (
@@ -51,6 +50,26 @@ const PayAndEnrollModal = ({ isOpen, onClose, club, platformFee, onConfirmEnroll
                          )}
                     </button>
                 </div>
+            </div>
+        </div>
+    );
+};
+
+const ChoosePaymentMethodModal = ({ isOpen, onClose, onOnline, onOffline, processing }) => {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] flex justify-center items-center p-4">
+            <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm text-center">
+                <h2 className="text-xl font-semibold text-slate-800 mb-4">Choose Enrollment Method</h2>
+                <p className="text-sm text-slate-600 mb-6">You can pay securely online or request to pay the coach directly in cash.</p>
+                <div className="flex flex-col space-y-3">
+                    <button onClick={onOnline} disabled={processing} className="w-full flex justify-center items-center py-2.5 px-4 text-base font-medium rounded-lg text-white bg-sky-600 hover:bg-sky-700 disabled:bg-sky-400">Pay Online</button>
+                    <button onClick={onOffline} disabled={processing} className="w-full flex justify-center items-center py-2.5 px-4 text-base font-medium rounded-lg text-slate-700 bg-slate-200 hover:bg-slate-300 disabled:bg-slate-300">
+                        {processing ? 'Processing...' : 'Request Offline Payment'}
+                    </button>
+                </div>
+                <button onClick={onClose} disabled={processing} className="mt-6 text-sm text-slate-500 hover:text-slate-700">Cancel</button>
             </div>
         </div>
     );
@@ -67,6 +86,7 @@ const ClubDetailPage = () => {
     const [error, setError] = useState("");
     const [currentUserEnrollment, setCurrentUserEnrollment] = useState(null);
     const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+    const [isChooseMethodModalOpen, setIsChooseMethodModalOpen] = useState(false);
     const [processingEnrollment, setProcessingEnrollment] = useState(false);
     const [platformFee, setPlatformFee] = useState(0);
     const [currentCarouselImageIndex, setCurrentCarouselImageIndex] = useState(0);
@@ -96,16 +116,16 @@ const ClubDetailPage = () => {
             setPlatformFee(settingsResponse.data.platformFee || 0);
 
             if (myEnrollmentsResponse.data) {
-                const enrollmentForThisClub = myEnrollmentsResponse.data.find(
-                    (enrollment) => enrollment.club?._id === fetchedClubData._id && enrollment.status === 'active'
+                const enrollmentsForThisClub = myEnrollmentsResponse.data.filter(
+                    (enrollment) => enrollment.club?._id === fetchedClubData._id
                 );
-                setCurrentUserEnrollment(enrollmentForThisClub || null);
+                const mostRecentEnrollment = enrollmentsForThisClub[0] || null;
+                setCurrentUserEnrollment(mostRecentEnrollment);
             }
             
         } catch (err) {
             if (err.response && err.response.status === 404) {
-                setClub(null);
-                setError("");
+                setClub(null); setError("");
             } else {
                 setError(err.response?.data?.message || "Failed to fetch page data.");
             }
@@ -115,9 +135,7 @@ const ClubDetailPage = () => {
     }, [clubId, user]);
 
     useEffect(() => { 
-        if (clubId && !authLoading) {
-            fetchPageData();
-        }
+        if (clubId && !authLoading) fetchPageData();
     }, [clubId, authLoading, fetchPageData]);
 
     const handleClubUpdated = (updatedClubData) => {
@@ -125,34 +143,23 @@ const ClubDetailPage = () => {
         toast.success("Club details updated successfully!");
     };
   
-    const carouselItems = useMemo(() => {
-        if (!club) return [];
-        return club.carouselImages || [];
-    }, [club]);
+    const carouselItems = useMemo(() => club?.carouselImages || [], [club]);
 
     const nextImage = useCallback(() => {
-        if (carouselItems.length > 1) {
-            setCurrentCarouselImageIndex((prev) => (prev + 1) % carouselItems.length);
-        }
+        if (carouselItems.length > 1) setCurrentCarouselImageIndex((prev) => (prev + 1) % carouselItems.length);
     }, [carouselItems]);
 
     const prevImage = () => {
-        if (carouselItems.length > 1) {
-            setCurrentCarouselImageIndex((prev) => (prev - 1 + carouselItems.length) % carouselItems.length);
-        }
+        if (carouselItems.length > 1) setCurrentCarouselImageIndex((prev) => (prev - 1 + carouselItems.length) % carouselItems.length);
     };
     
     useEffect(() => {
         if (carouselIntervalRef.current) clearInterval(carouselIntervalRef.current);
-        if (carouselItems.length > 1) {
-            carouselIntervalRef.current = setInterval(nextImage, 4000);
-        }
-        return () => {
-            if (carouselIntervalRef.current) clearInterval(carouselIntervalRef.current);
-        };
+        if (carouselItems.length > 1) carouselIntervalRef.current = setInterval(nextImage, 4000);
+        return () => { if (carouselIntervalRef.current) clearInterval(carouselIntervalRef.current) };
     }, [carouselItems, nextImage]);
 
-    const handleOpenEnrollModal = () => {
+    const handleOpenEnrollFlow = () => {
         if (!user) {
             toast.info("Please log in to enroll.");
             navigate("/login", { state: { from: location } });
@@ -162,13 +169,33 @@ const ClubDetailPage = () => {
             toast.warn("Only players can enroll in clubs.");
             return;
         }
+        setIsChooseMethodModalOpen(true);
+    };
+
+    const handleOnlinePayment = () => {
+        setIsChooseMethodModalOpen(false);
         setIsPayModalOpen(true);
     };
+
+    const handleRequestOffline = async () => {
+        setProcessingEnrollment(true);
+        try {
+            const res = await api.post('/enrollments/request-offline', { clubId: club._id });
+            toast.success(res.data.message);
+            await fetchPageData();
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to send request.');
+        } finally {
+            setIsChooseMethodModalOpen(false);
+            setProcessingEnrollment(false);
+        }
+    };
   
-    const handleConfirmEnrollment = async () => {
+    const handleConfirmOnlinePayment = async () => {
         setProcessingEnrollment(true);
         try {
             const { data: orderResponse } = await api.post("/enrollments/create-order", { clubId: club._id });
+            
             if (orderResponse.isFreeEnrollment) {
                 toast.success(orderResponse.message);
                 setIsPayModalOpen(false);
@@ -176,6 +203,7 @@ const ClubDetailPage = () => {
                 setProcessingEnrollment(false);
                 return;
             }
+
             const { orderId, amount, currency, razorpayKeyId } = orderResponse;
             const options = {
                 key: razorpayKeyId,
@@ -187,7 +215,6 @@ const ClubDetailPage = () => {
                 order_id: orderId,
                 handler: async function (response) {
                     try {
-                        setProcessingEnrollment(true);
                         const verificationData = {
                             razorpay_order_id: response.razorpay_order_id,
                             razorpay_payment_id: response.razorpay_payment_id,
@@ -197,7 +224,6 @@ const ClubDetailPage = () => {
                         const { data: verifyResponse } = await api.post("/enrollments/verify-payment", verificationData);
                         if (verifyResponse.success) {
                             toast.success(verifyResponse.message || `Successfully enrolled in ${club.name}!`);
-                            setIsPayModalOpen(false);
                             await fetchPageData();
                         } else {
                             toast.error(verifyResponse.message || "Payment verification failed.");
@@ -205,14 +231,11 @@ const ClubDetailPage = () => {
                     } catch (err) {
                         toast.error(err.response?.data?.message || "An error occurred during payment verification.");
                     } finally {
+                        setIsPayModalOpen(false);
                         setProcessingEnrollment(false);
                     }
                 },
-                prefill: {
-                    name: user.name,
-                    email: user.email,
-                    contact: user.phone || ''
-                },
+                prefill: { name: user.name, email: user.email, contact: user.phone || '' },
                 theme: { color: "#0EA5E9" },
                 modal: { ondismiss: () => setProcessingEnrollment(false) }
             };
@@ -229,17 +252,8 @@ const ClubDetailPage = () => {
     };
 
     const canEnroll = useMemo(() => {
-        if (!user || user.role !== 'Player') {
-            return false;
-        }
-        if (!currentUserEnrollment) {
-            return true;
-        }
-        const now = new Date();
-        const endDate = new Date(currentUserEnrollment.endDate);
-        if (endDate < now) {
-            return true;
-        }
+        if (!user || user.role !== 'Player') return false;
+        if (!currentUserEnrollment || currentUserEnrollment.status === 'expired') return true;
         return false;
     }, [user, currentUserEnrollment]);
 
@@ -247,32 +261,21 @@ const ClubDetailPage = () => {
     const isAdminUser = useMemo(() => user?.role === "Admin", [user]);
     const canEditClub = useMemo(() => isAdminUser || isManagingCoachForThisClub, [isAdminUser, isManagingCoachForThisClub]);
     const showEnrollButton = useMemo(() => !authLoading && club && canEnroll, [authLoading, club, canEnroll]);
-  
+    
     if (authLoading || (loading && !club && !error)) {
-        return (
-            <div className="min-h-screen-minus-nav flex flex-col items-center justify-center bg-slate-50 p-6">
-                <LoadingSpinner text="Loading Club Details..." />
-            </div>
-        );
+        return ( <div className="min-h-screen-minus-nav flex items-center justify-center"><LoadingSpinner text="Loading Club Details..." /></div> );
     }
     
     if (error) {
-        return (
-            <div className="p-4 sm:p-6 lg:p-8">
-                <ErrorStateDisplay message={error} onRetry={fetchPageData}/>
-            </div>
-        );
+        return ( <div className="p-4 sm:p-6 lg:p-8"><ErrorStateDisplay message={error} onRetry={fetchPageData}/></div> );
     }
 
     if (!club) {
-        return (
-            <div className="p-4 sm:p-6 lg:p-8">
-                <NotFoundDisplay itemType="Club" />
-            </div>
-        );
+        return ( <div className="p-4 sm:p-6 lg:p-8"><NotFoundDisplay itemType="Club" /></div> );
     }
 
     const currentHeroImageSrc = carouselItems.length > 0 ? carouselItems[currentCarouselImageIndex] : club.logoUrl || `https://placehold.co/1200x500/E2E8F0/475569.png?text=${encodeURIComponent(club.name)}`;
+    const enrollButtonText = currentUserEnrollment && currentUserEnrollment.status === 'expired' ? 'Renew Enrollment' : 'Enroll in Club';
 
     return (
         <div className={`flex flex-col ${isManagingCoachForThisClub ? "md:flex-row" : ""} min-h-screen-minus-nav bg-slate-100`}>
@@ -287,100 +290,88 @@ const ClubDetailPage = () => {
                     <div className="absolute inset-0 opacity-40 group-hover:opacity-50 transition-opacity duration-300">
                         <img src={currentHeroImageSrc} alt={`${club.name || 'Club'} Highlight`} className="w-full h-full object-cover"/>
                     </div>
-                    {carouselItems && carouselItems.length > 1 && (
+                    {carouselItems.length > 1 && (
                         <>
-                            <button onClick={prevImage} className="absolute top-1/2 -translate-y-1/2 left-3 sm:left-4 z-30 p-2.5 bg-black/40 hover:bg-black/60 text-white rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white" aria-label="Previous image"><ChevronLeftIcon /></button>
-                            <button onClick={nextImage} className="absolute top-1/2 -translate-y-1/2 right-3 sm:right-4 z-30 p-2.5 bg-black/40 hover:bg-black/60 text-white rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white" aria-label="Next image"><ChevronRightIcon /></button>
+                            <button onClick={prevImage} className="absolute top-1/2 -translate-y-1/2 left-3 sm:left-4 z-30 p-2.5 bg-black/40 hover:bg-black/60 rounded-full"><ChevronLeftIcon /></button>
+                            <button onClick={nextImage} className="absolute top-1/2 -translate-y-1/2 right-3 sm:right-4 z-30 p-2.5 bg-black/40 hover:bg-black/60 rounded-full"><ChevronRightIcon /></button>
                         </>
                     )}
                     <div className="relative z-10 flex flex-col md:flex-row justify-between items-stretch min-h-[45vh] sm:min-h-[50vh] md:min-h-[55vh] p-4 sm:p-6 md:p-8">
                         <div className="flex flex-col justify-between md:w-2/3 lg:w-3/4 mb-6 md:mb-0 md:pr-6">
                             <div className="flex items-center space-x-3 sm:space-x-4">
-                                {club.logoUrl && <img src={club.logoUrl} alt={`${club.name} Logo`} className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-lg sm:rounded-xl bg-white/10 backdrop-blur-sm p-1 sm:p-1.5 border-2 border-white/40 shadow-lg flex-shrink-0"/>}
+                                {club.logoUrl && <img src={club.logoUrl} alt={`${club.name} Logo`} className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-lg sm:rounded-xl bg-white/10 backdrop-blur-sm p-1.5 border-2 border-white/40 shadow-lg"/>}
                                 <div><h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight [text-shadow:_0_2px_4px_rgb(0_0_0_/_50%)]">{club.name}</h1></div>
                             </div>
                             <div className="mt-auto pt-4">
-                                {club.coach && club.coach.name && (
-                                    <p className="text-sm sm:text-base text-slate-200 font-medium [text-shadow:_0_1px_2px_rgb(0_0_0_/_40%)] mb-3">Coached by: <span className="font-semibold text-white">{club.coach.name}</span></p>
-                                )}
-                                {canEditClub && (
-                                    <button onClick={() => setIsEditModalOpen(true)} className="px-3 py-1.5 sm:px-4 sm:py-2 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white text-xs sm:text-sm font-medium rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2 focus:ring-offset-slate-800 transition-colors">Edit Club</button>
-                                )}
+                                {club.coach?.name && <p className="text-sm sm:text-base text-slate-200 font-medium mb-3">Coached by: <span className="font-semibold text-white">{club.coach.name}</span></p>}
+                                {canEditClub && <button onClick={() => setIsEditModalOpen(true)} className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm font-medium rounded-md">Edit Club</button>}
                             </div>
                         </div>
                         {club.qrCodeUrl && (
-                            <div className="flex-shrink-0 md:w-auto flex flex-col items-center justify-center md:items-end md:justify-center mt-4 md:mt-0 md:pl-4 md:self-center">
-                                <div className="bg-white p-2 sm:p-2.5 rounded-lg shadow-xl border-2 border-sky-300/60 w-32 h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 lg:w-44 lg:h-44">
-                                    <a href={club.clubProfileUrl || '#'} target="_blank" rel="noopener noreferrer" title="Visit Club Page (QR Link)" onClick={(e) => !club.clubProfileUrl && e.preventDefault()} className="block w-full h-full">
+                            <div className="flex-shrink-0 md:w-auto flex flex-col items-center justify-center">
+                                <div className="bg-white p-2.5 rounded-lg shadow-xl w-36 h-36 md:w-44 md:h-44">
+                                    <a href={club.clubProfileUrl || '#'} target="_blank" rel="noopener noreferrer">
                                         <img src={club.qrCodeUrl} alt={`${club.name} QR Code`} className="w-full h-full object-contain" />
                                     </a>
                                 </div>
-                                <p className="text-center text-xxs sm:text-xs text-slate-100/90 mt-1.5 font-medium [text-shadow:_0_1px_2px_rgb(0_0_0_/_40%)]">Scan to visit</p>
+                                <p className="text-xs text-slate-100/90 mt-1.5 font-medium">Scan to visit</p>
                             </div>
                         )}
                     </div>
                 </section>
 
                 <div className={`p-4 sm:p-6 lg:p-8 ${!isManagingCoachForThisClub && "max-w-5xl lg:max-w-6xl mx-auto"}`}>
-                    <section className="mb-6 md:mb-8 bg-white p-4 sm:p-6 md:p-8 rounded-xl shadow-lg border border-slate-200">
-                        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-x-8 gap-y-6">
+                    <section className="mb-8 bg-white p-6 md:p-8 rounded-xl shadow-lg border">
+                        <div className="flex flex-col lg:flex-row justify-between gap-8">
                             <div className="flex-grow space-y-4">
                                 <div>
-                                    <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mb-3">About {club.name}</h2>
-                                    <div className="prose prose-slate max-w-none text-sm sm:text-base"><p>{club.description || "No description available for this club."}</p></div>
+                                    <h2 className="text-2xl font-bold text-slate-800 mb-3">About {club.name}</h2>
+                                    <div className="prose prose-slate max-w-none"><p>{club.description || "No description available."}</p></div>
                                 </div>
-                                {(club.address?.street || club.location || club.address?.city) && (
+                                {club.location && (
                                     <div>
                                         <h3 className="text-md font-semibold text-slate-700 mb-1.5 flex items-center"><LocationPinIcon /> Location</h3>
-                                        <address className="text-sm text-slate-600 not-italic space-y-0.5">
-                                            {club.address?.street && <div>{club.address.street}</div>}
-                                            {(club.address?.city || club.address?.state || club.address?.postalCode) ? (
-                                                <div>
-                                                    {club.address.city && <span>{club.address.city}, </span>}
-                                                    {club.address.state && <span>{club.address.state} </span>}
-                                                    {club.address.postalCode && <span>{club.address.postalCode}</span>}
-                                                </div>
-                                            ) : club.location ? (
-                                                <div>{club.location}</div>
-                                            ) : null}
-                                            {club.address?.country && <div>{club.address.country}</div>}
-                                        </address>
+                                        <address className="text-slate-600 not-italic">{club.location}</address>
                                     </div>
                                 )}
                             </div>
-                            <div className="flex-shrink-0 lg:w-64 xl:w-72 w-full space-y-6">
+                            <div className="flex-shrink-0 lg:w-72 w-full space-y-6">
                                 {(club.groundFees?.amount > 0 || club.coachingFees?.amount > 0) && (
                                     <div>
                                         <h3 className="text-md font-semibold text-slate-700 mb-1.5 flex items-center"><CashIcon /> Fees</h3>
-                                        {club.groundFees?.amount > 0 && (
-                                            <p className="text-sm text-slate-600">Ground: <span className="font-medium">{club.groundFees.amount?.toLocaleString()} {currency}</span> {club.groundFees.notes && <span className="text-xs">({club.groundFees.notes})</span>}</p>
-                                        )}
-                                        {club.coachingFees?.amount > 0 && (
-                                            <p className="text-sm text-slate-600 mt-0.5">Coaching: <span className="font-medium">{club.coachingFees.amount?.toLocaleString()} {currency}</span> {club.coachingFees.notes && <span className="text-xs">({club.coachingFees.notes})</span>}</p>
-                                        )}
+                                        {club.groundFees?.amount > 0 && <p className="text-sm text-slate-600">Ground: <span className="font-medium">{club.groundFees.amount.toLocaleString()} {currency}</span></p>}
+                                        {club.coachingFees?.amount > 0 && <p className="text-sm text-slate-600">Coaching: <span className="font-medium">{club.coachingFees.amount.toLocaleString()} {currency}</span></p>}
                                     </div>
                                 )}
                                 {(club.socialMedia?.instagramUrl || club.socialMedia?.youtubeUrl) && (
                                     <div>
                                         <h3 className="text-md font-semibold text-slate-700 mb-2">Follow Us</h3>
-                                        <div className="flex flex-col space-y-1.5">
-                                            {club.socialMedia.instagramUrl && (<a href={club.socialMedia.instagramUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-sky-600 hover:text-sky-700 hover:underline flex items-center"><InstagramIcon /> Instagram</a>)}
-                                            {club.socialMedia.youtubeUrl && (<a href={club.socialMedia.youtubeUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-sky-600 hover:text-sky-700 hover:underline flex items-center"><YouTubeIcon /> YouTube</a>)}
+                                        <div className="space-y-1.5">
+                                            {club.socialMedia.instagramUrl && <a href={club.socialMedia.instagramUrl} target="_blank" rel="noopener noreferrer" className="text-sky-600 hover:underline flex items-center"><InstagramIcon /> Instagram</a>}
+                                            {club.socialMedia.youtubeUrl && <a href={club.socialMedia.youtubeUrl} target="_blank" rel="noopener noreferrer" className="text-sky-600 hover:underline flex items-center"><YouTubeIcon /> YouTube</a>}
                                         </div>
                                     </div>
                                 )}
                                 {showEnrollButton && (
-                                    <button onClick={handleOpenEnrollModal} disabled={processingEnrollment} className="w-full flex justify-center items-center py-2.5 sm:py-3 px-4 text-sm sm:text-base font-medium rounded-lg text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:bg-sky-400 disabled:cursor-not-allowed shadow-md">
-                                        {currentUserEnrollment && 'endDate' in currentUserEnrollment ? 'Renew Enrollment' : 'Enroll in Club'}
+                                    <button onClick={handleOpenEnrollFlow} className="w-full py-3 px-4 text-base font-medium rounded-lg text-white bg-sky-600 hover:bg-sky-700 shadow-md">
+                                        {enrollButtonText}
                                     </button>
                                 )}
-                                {currentUserEnrollment && !canEnroll && (
-                                    <div className="p-3 bg-green-100 text-green-800 border border-green-200 rounded-lg text-sm font-medium text-center shadow-sm">
-                                        <p className="font-semibold">✓ You are enrolled in this club.</p>
-                                        <p className="text-xs mt-1 text-green-700">
-                                            Your membership is active until {new Date(currentUserEnrollment.endDate).toLocaleDateString()}.
-                                        </p>
-                                    </div>
+                                {currentUserEnrollment && (
+                                    <>
+                                        {currentUserEnrollment.status === 'active' && (
+                                            <div className="p-3 bg-green-100 text-green-800 border-green-200 rounded-lg text-center shadow-sm">
+                                                <p className="font-semibold">✓ You are enrolled</p>
+                                                <p className="text-xs mt-1">Active until {new Date(currentUserEnrollment.endDate).toLocaleDateString()}</p>
+                                            </div>
+                                        )}
+                                        {currentUserEnrollment.status === 'pending' && currentUserEnrollment.method === 'offline' && (
+                                            <div className="p-3 bg-amber-100 text-amber-800 border-amber-200 rounded-lg text-center shadow-sm">
+                                                <p className="font-semibold">⏳ Offline Request Sent</p>
+                                                <p className="text-xs mt-1">Please pay the coach in cash to activate.</p>
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </div>
                         </div>
@@ -401,11 +392,19 @@ const ClubDetailPage = () => {
             
             <PayAndEnrollModal 
                 isOpen={isPayModalOpen} 
-                onClose={() => setIsPayModalOpen(false)} 
+                onClose={() => setProcessingEnrollment(false) || setIsPayModalOpen(false)}
                 club={club}
                 platformFee={platformFee}
-                onConfirmEnrollment={handleConfirmEnrollment} 
+                onConfirmEnrollment={handleConfirmOnlinePayment} 
                 processingEnrollment={processingEnrollment} 
+            />
+
+            <ChoosePaymentMethodModal
+                isOpen={isChooseMethodModalOpen}
+                onClose={() => setIsChooseMethodModalOpen(false)}
+                onOnline={handleOnlinePayment}
+                onOffline={handleRequestOffline}
+                processing={processingEnrollment}
             />
         </div>
     );

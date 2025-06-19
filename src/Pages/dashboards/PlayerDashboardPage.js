@@ -217,39 +217,50 @@ const PlayerDashboardPage = () => {
             </section>
 
             {/* --- Payment History Section --- */}
-            <section className="bg-white shadow-lg rounded-xl overflow-hidden border border-slate-200">
-                <header className="p-4 sm:p-6 border-b border-slate-200 bg-slate-50">
-                    <h2 className="text-xl font-semibold text-slate-800 flex items-center gap-2.5"><FiClock /> Payment History</h2>
-                </header>
-                {paymentHistory.length > 0 ? (
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full">
-                            <thead className="bg-slate-100">
-                                <tr>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">For Club</th>
-                                    <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Amount Paid</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-slate-200">
-                                {paymentHistory.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)).map((payment) => (
-                                    <tr key={payment._id} className="hover:bg-slate-50">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{formatDate(payment.createdAt)}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-800 font-semibold">{payment.clubName}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-700 text-right font-semibold">
-                                            {payment.amountDetails?.totalAmount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap"><span className={getPaymentStatusClass(payment.status)}>{payment.status}</span></td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                ) : (
-                    <p className="text-slate-500 py-10 px-6 text-center text-lg">You have no payment history recorded yet.</p>
-                )}
-            </section>
+
+<section className="bg-white shadow-lg rounded-xl overflow-hidden border border-slate-200">
+    <header className="p-4 sm:p-6 border-b border-slate-200 bg-slate-50">
+        <h2 className="text-xl font-semibold text-slate-800 flex items-center gap-2.5"><FiClock /> Payment History</h2>
+    </header>
+    {paymentHistory.length > 0 ? (
+        <div className="overflow-x-auto">
+            <table className="min-w-full">
+                <thead className="bg-slate-100">
+                    <tr>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">For Club</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Method</th>
+                        <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Amount Paid</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                    </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-slate-200">
+                    {paymentHistory.map((payment) => (
+                        <tr key={payment._id} className="hover:bg-slate-50">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                                {formatDate(payment.createdAt)}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-800 font-semibold">
+                                {payment.clubName || <span className="italic text-slate-400">N/A</span>}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 capitalize">
+                                {payment.method?.replace('_', ' ') || 'N/A'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-700 text-right font-semibold">
+                                {payment.amountDetails?.totalAmount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                                <span className={getPaymentStatusClass(payment.status)}>{payment.status}</span>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    ) : (
+        <p className="text-slate-500 py-10 px-6 text-center text-lg">You have no payment history recorded yet.</p>
+    )}
+</section>
 
             {isEditProfileModalOpen && dataToDisplay && (
                 <UserProfileEditModal
