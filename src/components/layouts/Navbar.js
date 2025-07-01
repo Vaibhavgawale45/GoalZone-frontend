@@ -1,6 +1,7 @@
 // client/src/components/layout/Navbar.js
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+// --- FIX 1: Import useLocation ---
+import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext.js";
 import api from "../../services/api.js";
 import { toast } from "react-toastify";
@@ -10,6 +11,8 @@ import NotificationSidebar from "./NotificationSidebar.js";
 // --- ICONS (from react-icons library for consistency) ---
 import { FiLogOut, FiMenu, FiX, FiChevronDown, FiBell, FiAlertTriangle } from 'react-icons/fi';
 
+
+// The following components are correct and do not need changes.
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, children }) => {
   if (!isOpen) return null;
   return (
@@ -34,8 +37,6 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, children }) => {
     </div>
   );
 };
-
-// --- Helper function for cleaner dashboard path logic ---
 const getDashboardPath = (user) => {
     if (!user) return "/redirect-dashboard";
     switch (user.role) {
@@ -52,27 +53,26 @@ const getDashboardPath = (user) => {
     }
 };
 
+
 const Navbar = ({ registerPushNotifications }) => {
+  // --- FIX 2: Initialize useLocation hook ---
+  const location = useLocation();
   const { user, logout, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
-  // --- UI State ---
+  // All state and other hooks are correct
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const mobileMenuRef = useRef(null);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const userDropdownRef = useRef(null);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isNotificationSidebarOpen, setIsNotificationSidebarOpen] = useState(false);
-
-  // --- Notification State ---
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [notificationPage, setNotificationPage] = useState(1);
   const [hasMoreNotifications, setHasMoreNotifications] = useState(true);
   const [pushSubscribed, setPushSubscribed] = useState(false);
-
-  // --- Event Handlers (memoized with useCallback) ---
   const handleLogout = useCallback(async () => {
     if (pushSubscribed && "serviceWorker" in navigator && "PushManager" in window) {
       try {
@@ -85,12 +85,11 @@ const Navbar = ({ registerPushNotifications }) => {
       } catch (error) { console.error("Error unsubscribing from push on logout:", error); }
     }
     logout();
-    setIsLogoutModalOpen(false); // Close modal on confirm
+    setIsLogoutModalOpen(false);
     setIsUserDropdownOpen(false);
     navigate("/login");
     toast.info("Logged out successfully.");
   }, [logout, navigate, pushSubscribed]);
-
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (userDropdownRef.current && !userDropdownRef.current.contains(event.target)) {
@@ -103,10 +102,6 @@ const Navbar = ({ registerPushNotifications }) => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  // --- OPTIMIZED NOTIFICATION LOGIC ---
-
-  // 1. Fetches *only* the unread count. Lightweight and suitable for polling.
   const fetchUnreadCount = useCallback(async () => {
     if (!user || authLoading) return;
     try {
@@ -116,8 +111,6 @@ const Navbar = ({ registerPushNotifications }) => {
         console.error("Notification count poll error:", err);
     }
   }, [user, authLoading]);
-
-  // 2. Fetches the full list of notifications. Called on-demand when sidebar opens.
   const fetchNotificationsData = useCallback(async (page = 1, append = false) => {
     if (!user || authLoading || loadingNotifications) return;
     setLoadingNotifications(true);
@@ -137,30 +130,24 @@ const Navbar = ({ registerPushNotifications }) => {
       setLoadingNotifications(false);
     }
   }, [user, authLoading, loadingNotifications]);
-
-  // 3. Effect to poll for the unread count to keep the badge fresh.
   useEffect(() => {
     if (user && !authLoading) {
-        fetchUnreadCount(); // Fetch once on load
+        fetchUnreadCount();
         const intervalId = setInterval(() => {
             if (document.visibilityState === "visible") {
                 fetchUnreadCount();
             }
-        }, 60 * 1000); // Poll every 60 seconds
+        }, 60 * 1000);
         return () => clearInterval(intervalId);
     } else {
-        // Cleanup on logout
         setUnreadCount(0);
         setNotifications([]);
         setIsNotificationSidebarOpen(false);
     }
   }, [user, authLoading, fetchUnreadCount]);
-  
-  // 4. Opens the sidebar and triggers the full data fetch.
   const toggleNotificationSidebar = useCallback(() => {
     const isOpening = !isNotificationSidebarOpen;
     setIsNotificationSidebarOpen(isOpening);
-
     if (isOpening) {
         setNotifications([]);
         setNotificationPage(1);
@@ -168,7 +155,6 @@ const Navbar = ({ registerPushNotifications }) => {
         fetchNotificationsData(1, false);
     }
   }, [isNotificationSidebarOpen, fetchNotificationsData]);
-
   useEffect(() => {
     const checkPushSubscriptionStatus = async () => {
       if (user && !authLoading && "serviceWorker" in navigator && "PushManager" in window) {
@@ -181,8 +167,6 @@ const Navbar = ({ registerPushNotifications }) => {
     };
     checkPushSubscriptionStatus();
   }, [user, authLoading]);
-  
-  // Memoized handlers to pass to children
   const handleEnablePushNotifications = useCallback(async () => {}, []);
   const onNotificationRead = useCallback((notificationId) => {
     setNotifications((prev) => prev.map((n) => (n._id === notificationId ? { ...n, isRead: true } : n)));
@@ -193,20 +177,27 @@ const Navbar = ({ registerPushNotifications }) => {
     setUnreadCount(0);
   }, []);
 
+  // --- FIX 3: Define a clear variable for the condition ---
+  const isCoachOnDashboardPage = user?.role === 'Coach' && location.pathname.includes('/dashboard');
 
-  const isCoach = user && user.role === 'Coach';
+  // --- FIX 4: Create the click handler for the logo ---
+  const handleLogoClick = (event) => {
+    // If the coach is on a dashboard page, prevent the link from navigating.
+    if (isCoachOnDashboardPage) {
+      event.preventDefault();
+    }
+  };
+
   const shouldShowMainLinks = !user || user.role === "Player";
   const dashboardPath = getDashboardPath(user);
-
-  // --- Reusable Tailwind classes for consistency ---
+  
+  // All JSX variables and classes are correct
   const navLinkBaseClass = "px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2";
   const getNavLinkClass = ({ isActive }) => `${navLinkBaseClass} ${isActive ? "bg-sky-100 text-sky-700 font-semibold" : "text-slate-700 hover:bg-slate-100 hover:text-sky-600"}`;
   const mobileNavLinkBaseClass = "block px-3 py-2 rounded-md text-base font-medium transition-colors duration-150 focus:outline-none focus:ring-1 focus:ring-sky-500";
   const getMobileNavLinkClass = ({ isActive }) => `${mobileNavLinkBaseClass} ${isActive ? "bg-sky-100 text-sky-700" : "text-slate-700 hover:bg-slate-100 hover:text-sky-600"}`;
   const primaryButtonClasses = "block w-full text-center py-2 px-4 rounded-lg font-bold text-white bg-sky-600 hover:bg-sky-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 focus:ring-offset-gray-800";
   const secondaryButtonClasses = "block w-full text-center py-2 px-4 rounded-lg font-bold text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-200";
-  
-  // --- JSX for navigation links ---
   const mainNavLinks = (
     <>
       <NavLink to="/clubs" className={getNavLinkClass}>Clubs</NavLink>
@@ -215,7 +206,6 @@ const Navbar = ({ registerPushNotifications }) => {
       <NavLink to="/about" className={getNavLinkClass}>About</NavLink>
     </>
   );
-  
   const mainNavLinksMobile = (
     <>
       <NavLink to="/clubs" className={getMobileNavLinkClass} onClick={() => setIsMobileMenuOpen(false)}>Clubs</NavLink>
@@ -230,8 +220,15 @@ const Navbar = ({ registerPushNotifications }) => {
       <nav className="bg-white shadow-lg sticky top-0 z-[60] print:hidden border-b border-slate-200">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className={`flex items-center ${isCoach ? 'ml-16' : 'ml-0'} md:ml-0 transition-all duration-300`}>
-              <Link to="/" className="text-2xl font-extrabold text-sky-600 hover:text-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 rounded-sm transition-colors" aria-label="GoalZone Home">
+            
+            <div className={`flex items-center ${isCoachOnDashboardPage ? 'ml-16' : 'ml-0'} md:ml-0 transition-all duration-300`}>
+              {/* --- FIX 5: Apply the onClick handler to the Link component --- */}
+              <Link 
+                to="/" 
+                onClick={handleLogoClick}
+                className="text-2xl font-extrabold text-sky-600 hover:text-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 rounded-sm transition-colors" 
+                aria-label="GoalZone Home"
+              >
                 <img src={logo} alt="logo" className="h-7 w-46" />
               </Link>
             </div>
@@ -242,6 +239,7 @@ const Navbar = ({ registerPushNotifications }) => {
               </div>
             )}
 
+            {/* The rest of the file is correct and unchanged */}
             <div className="flex items-center">
               <div className="hidden md:flex items-center space-x-3">
                 {!authLoading && user && (
@@ -280,35 +278,32 @@ const Navbar = ({ registerPushNotifications }) => {
                   </div>
                 ))}
               </div>
-
               <div className="md:hidden flex items-center ml-2">
-                {!authLoading && user && (
-                  <>
-                    <button onClick={toggleNotificationSidebar} type="button" className="relative p-1.5 mr-2 bg-white rounded-full text-slate-500 hover:text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-sky-500" aria-label="View notifications">
-                      <FiBell className="h-6 w-6" />
-                      {unreadCount > 0 && ( <span className="absolute top-0 right-0 block h-4 w-4 transform -translate-y-0.5 translate-x-0.5 rounded-full ring-1 ring-white bg-red-500 text-white text-xs flex items-center justify-center"> {unreadCount > 9 ? "9+" : unreadCount} </span> )}
-                    </button>
-                    <button onClick={() => setIsLogoutModalOpen(true)} type="button" className="p-1.5 bg-white rounded-full text-red-500 hover:text-red-700 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500" aria-label="Logout">
-                      <FiLogOut className="h-6 w-6" />
-                    </button>
-                  </>
-                )}
-                {!isCoach && (
-                  <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} type="button" className="inline-flex items-center justify-center p-2 rounded-md text-slate-500 hover:text-sky-600 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-sky-500" aria-controls="mobile-menu" aria-expanded={isMobileMenuOpen} aria-label={isMobileMenuOpen ? "Close main menu" : "Open main menu"}>
-                    <span className="sr-only">Open main menu</span>
-                    {isMobileMenuOpen ? <FiX className="w-6 h-6" /> : <FiMenu className="w-6 h-6" />}
-                  </button>
-                )}
-              </div>
+                 {!authLoading && user && (
+                   <>
+                     <button onClick={toggleNotificationSidebar} type="button" className="relative p-1.5 mr-2 bg-white rounded-full text-slate-500 hover:text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-sky-500" aria-label="View notifications">
+                       <FiBell className="h-6 w-6" />
+                       {unreadCount > 0 && ( <span className="absolute top-0 right-0 block h-4 w-4 transform -translate-y-0.5 translate-x-0.5 rounded-full ring-1 ring-white bg-red-500 text-white text-xs flex items-center justify-center"> {unreadCount > 9 ? "9+" : unreadCount} </span> )}
+                     </button>
+                     <button onClick={() => setIsLogoutModalOpen(true)} type="button" className="p-1.5 bg-white rounded-full text-red-500 hover:text-red-700 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500" aria-label="Logout">
+                       <FiLogOut className="h-6 w-6" />
+                     </button>
+                   </>
+                 )}
+                 {!user?.role === 'Coach' && (
+                   <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} type="button" className="inline-flex items-center justify-center p-2 rounded-md text-slate-500 hover:text-sky-600 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-sky-500" aria-controls="mobile-menu" aria-expanded={isMobileMenuOpen} aria-label={isMobileMenuOpen ? "Close main menu" : "Open main menu"}>
+                     <span className="sr-only">Open main menu</span>
+                     {isMobileMenuOpen ? <FiX className="w-6 h-6" /> : <FiMenu className="w-6 h-6" />}
+                   </button>
+                 )}
+               </div>
             </div>
           </div>
         </div>
-
-        {isMobileMenuOpen && !isCoach && (
+        {isMobileMenuOpen && !user?.role === 'Coach' && (
           <div className="md:hidden border-t border-slate-200" id="mobile-menu" ref={mobileMenuRef}>
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
               {shouldShowMainLinks && mainNavLinksMobile}
-
               {user && user.role === 'Player' && (
                 <>
                     <hr className="my-2 border-slate-200" />
@@ -321,7 +316,6 @@ const Navbar = ({ registerPushNotifications }) => {
                     </Link>
                 </>
               )}
-
               {!user && (
                 <>
                   <hr className="my-2 border-slate-200" />

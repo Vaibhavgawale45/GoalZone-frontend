@@ -163,7 +163,7 @@ function App({registerPushNotifications}) {
             />
             {/* ***** NEW ROUTE FOR VIEWING A SPECIFIC PLAYER'S PROFILE/DETAILS ***** */}
             <Route 
-              path="/player/:playerId/details" 
+              path="/player/:playerId" 
               element={
                   <MainContentWrapper><PlayerDetailPage /></MainContentWrapper>
               }

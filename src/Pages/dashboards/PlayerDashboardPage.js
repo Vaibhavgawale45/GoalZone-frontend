@@ -130,12 +130,18 @@ const PlayerDashboardPage = () => {
     if (!dataToDisplay) return <div className="p-6 text-center text-lg text-slate-600">Could not load user data. Please try logging in again.</div>;
 
     // Derive payment history from the enrollments data for consistency
+    // NEW LOGIC - This correctly processes the nested `paymentHistory` array
     const paymentHistory = myEnrollments
-        .filter(enrollment => enrollment.payment) // Only include enrollments that have a payment record
-        .map(enrollment => ({
-            ...enrollment.payment, // Spread all fields from the populated payment object
-            clubName: enrollment.club?.name || 'N/A' // Add club name for context
-        }));
+        .flatMap(enrollment => 
+            // For each enrollment, map over its paymentHistory array.
+            // Use `|| []` as a safeguard in case paymentHistory is missing.
+            (enrollment.paymentHistory || []).map(payment => ({
+                ...payment, // Copy all properties from the original payment object
+                clubName: enrollment.club?.name || 'N/A' // Add the club name from the parent enrollment
+            }))
+        )
+        // Finally, sort the entire combined list by date to show the most recent payments first.
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     return (
         <div className="max-w-5xl mx-auto py-8 sm:py-12 px-4 sm:px-6 lg:px-8 space-y-10">

@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-// import { FaSwords } from 'react-icons/fa6';
+// --- FIX 1: Import useNavigate ---
+import { useNavigate } from 'react-router-dom';
 
 // --- Helper & Placeholder Components ---
 const LoadingSpinner = ({ text = "Loading..." }) => <div role="status" className="text-center p-10"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-500 mx-auto"></div><p className="mt-4 text-slate-600 font-semibold">{text}</p></div>;
@@ -8,10 +9,13 @@ const UsersPlaceholderIcon = () => ( <div className="w-16 h-16 sm:w-20 sm:h-20 b
 
 // --- Main Leaderboard Component ---
 const Leaderboard = ({ players = [], user, loading, isManagingCoachForThisClub }) => {
+    // --- FIX 2: Initialize the navigate hook ---
+    const navigate = useNavigate();
 
+    // --- FIX 3: Update the click handler to navigate ---
     const handlePlayerClick = (player) => {
-        alert(`Showing details for ${player.name} (Rank: #${player.rank})`);
-        console.log("Player Data:", player);
+        // This will navigate to a URL like "/player/60d21b4667d0d8992e610c85"
+        navigate(`/player/${player._id}`);
     };
 
     const sortedPlayers = useMemo(() => {
@@ -81,7 +85,6 @@ const Leaderboard = ({ players = [], user, loading, isManagingCoachForThisClub }
 
 
                     {/* --- DESKTOP PODIUM (`hidden md:flex`) --- */}
-                    {/* KEY CHANGE: gap-x-0 makes the pillars touch */}
                     <div className="hidden md:flex justify-center items-end gap-x-0">
                         {/* Rank 2 Pillar */}
                         <div className="w-1/3 flex flex-col items-center cursor-pointer" onClick={() => topThree[1] && handlePlayerClick(topThree[1])}>
@@ -91,7 +94,6 @@ const Leaderboard = ({ players = [], user, loading, isManagingCoachForThisClub }
                                         <img className="w-32 h-32 rounded-full border-4 border-amber-400 object-cover" src={topThree[1].imageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(topThree[1].name)}&background=FBBF24&color=fff`} alt={topThree[1].name} />
                                         <div className="absolute -bottom-2 w-full flex justify-center"><div className="w-10 h-10 rounded-full bg-amber-400 flex items-center justify-center text-white text-xl font-bold border-2 border-[#202020]">2</div></div>
                                     </div>
-                                    {/* KEY CHANGE: h-48 height, rounded-tl-lg for seamless edge */}
                                     <div className="bg-[#202020] rounded-l-2xl w-full h-72 -mt-16 pt-20 pb-4 flex flex-col items-center">
                                         <h3 className="text-white font-semibold text-lg truncate mt-4">{topThree[1].name}</h3>
                                         <p className="text-amber-400 font-bold text-2xl">{topThree[1].score.toLocaleString()}</p>
@@ -108,7 +110,6 @@ const Leaderboard = ({ players = [], user, loading, isManagingCoachForThisClub }
                                         <img className="w-40 h-40 rounded-full border-[6px] border-cyan-400 object-cover" src={topThree[0].imageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(topThree[0].name)}&background=22D3EE&color=fff`} alt={topThree[0].name} />
                                         <div className="absolute -bottom-2 w-full flex justify-center"><div className="w-12 h-12 rounded-full bg-cyan-400 flex items-center justify-center text-white text-2xl font-bold border-4 border-[#252A40]">1</div></div>
                                     </div>
-                                     {/* KEY CHANGE: h-60 height, no rounding for seamless middle */}
                                     <div className="bg-[#252A40] rounded-t-2xl w-full h-96 -mt-20 pt-24 pb-6 flex flex-col items-center">
                                         <h3 className="text-white font-semibold text-xl truncate mt-4">{topThree[0].name}</h3>
                                         <p className="text-cyan-400 font-bold text-3xl">{topThree[0].score.toLocaleString()}</p>
@@ -125,7 +126,6 @@ const Leaderboard = ({ players = [], user, loading, isManagingCoachForThisClub }
                                         <img className="w-32 h-32 rounded-full border-4 border-green-400 object-cover" src={topThree[2].imageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(topThree[2].name)}&background=4ADE80&color=fff`} alt={topThree[2].name} />
                                         <div className="absolute -bottom-2 w-full flex justify-center"><div className="w-9 h-9 rounded-full bg-green-400 flex items-center justify-center text-white text-lg font-bold border-2 border-[#202020]">3</div></div>
                                     </div>
-                                    {/* KEY CHANGE: h-48 height, rounded-tr-lg for seamless edge */}
                                     <div className="bg-[#202020] rounded-r-2xl w-full h-72 -mt-14 pt-16 pb-4 flex flex-col items-center">
                                         <h3 className="text-white font-semibold text-lg truncate mt-4">{topThree[2].name}</h3>
                                         <p className="text-green-400 font-bold text-2xl">{topThree[2].score.toLocaleString()}</p>
@@ -166,7 +166,8 @@ const Leaderboard = ({ players = [], user, loading, isManagingCoachForThisClub }
                                     <img className="w-10 h-10 rounded-full object-cover ml-2" src={player.imageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(player.name)}&background=E2E8F0&color=64748B`} alt={player.name} />
                                     <div className="ml-3">
                                         <p className="font-semibold text-slate-800 truncate">{player.name}</p>
-                                        <p className="text-xs text-slate-500 truncate">{player.details || "No details provided"}</p>
+                                        <p className="text-xs text-slate-500 truncate">{player.email || "Email not provided"}</p>
+                                        <p className="text-xs text-slate-500 truncate">{player.phone || "Phone not provided"}</p>
                                     </div>
                                 </div>
                                 <div className="text-right flex-shrink-0 ml-2">

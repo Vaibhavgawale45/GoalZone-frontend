@@ -57,7 +57,7 @@ const ResetPasswordPage = () => {
 
     try {
       // API call to backend to reset the password using the token
-      await api.put(`/auth/reset-password/${resetToken}`, { password });
+      await api.patch(`/auth/reset-password/${resetToken}`, { password });
       setMessage('Your password has been reset successfully! You can now log in with your new password.');
       setPassword('');
       setConfirmPassword('');
