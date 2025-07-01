@@ -124,6 +124,11 @@ const RegisterPage = () => {
               className="input-style" placeholder="••••••••" disabled={loading} />
           </div>
           <div>
+            <label htmlFor="phone-register" className="label-style">Phone Number</label>
+            <input id="phone-register" name="phone" type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)}
+            className="input-style" placeholder="Your Phone Number" disabled={loading} />
+          </div>
+          <div>
             <label htmlFor="role-register" className="label-style">Register as*</label>
             <select id="role-register" name="role" value={role} onChange={(e) => setRole(e.target.value)}
               className="input-style appearance-none bg-white" disabled={loading}>
@@ -142,11 +147,7 @@ const RegisterPage = () => {
             <div className="pt-4 border-t mt-4">
                 <h3 className="text-md font-medium text-gray-700 mb-3">Optional Information</h3>
                 <div className="space-y-4">
-                    <div>
-                        <label htmlFor="phone-register" className="label-style">Phone Number</label>
-                        <input id="phone-register" name="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
-                        className="input-style" placeholder="Your Phone Number" disabled={loading} />
-                    </div>
+                    
                     <div>
                         <label htmlFor="imageUrl-register" className="label-style">Profile Image URL</label>
                         <input id="imageUrl-register" name="imageUrl" type="url" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)}

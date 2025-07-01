@@ -254,7 +254,7 @@ const ClubDetailPage = () => {
             feesInfo = `💰 *Fees:* Free to join!`;
         }
 
-        const locationInfo = club.location ? `📍 *Location:* ${club.address.street}, ${club.address.city}, ${club.address.state}, ${club.address.country} - ${club.address.postalCode}` : 'Not Provided';
+        const locationInfo = club.location ? `📍 *Location:* ${club?.address?.street}, ${club?.address?.city}, ${club?.address?.state}, ${club?.address?.country} - ${club?.address?.postalCode}` : 'Not Provided';
 
         const qrCodeCta = club.qrCodeUrl ? 'Check out their page to scan the club\'s QR Code for quick access!' : '';
 
