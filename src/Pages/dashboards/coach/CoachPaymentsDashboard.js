@@ -86,10 +86,10 @@ const CoachPaymentsDashboard = () => {
         const now = new Date();
         const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-        const totalEarnings = payments.reduce((acc, p) => acc + (p.transferDetails?.coachTransfer || 0), 0);
+        const totalEarnings = payments.reduce((acc, p) => acc + (p.amountDetails?.clubFee || 0), 0);
         const earningsThisMonth = payments
             .filter(p => new Date(p.createdAt) >= firstDayOfMonth)
-            .reduce((acc, p) => acc + (p.transferDetails?.coachTransfer || 0), 0);
+            .reduce((acc, p) => acc + (p.amountDetails?.clubFee || 0), 0);
         
         const newEnrollmentsThisMonth = payments.filter(p => new Date(p.createdAt) >= firstDayOfMonth).length;
 
@@ -106,7 +106,7 @@ const CoachPaymentsDashboard = () => {
             if (!acc[monthYear]) {
                 acc[monthYear] = { earnings: 0, payments: [] };
             }
-            acc[monthYear].earnings += p.transferDetails?.coachTransfer || 0;
+            acc[monthYear].earnings += p.amountDetails?.clubFee || 0;
             acc[monthYear].payments.push(p);
             return acc;
         }, {});
@@ -200,8 +200,8 @@ const CoachPaymentsDashboard = () => {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{p.club?.name || 'N/A'}</td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{new Date(p.createdAt).toLocaleDateString()}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-700 text-right font-medium">{formatCurrency(p.amountDetails.totalAmount)}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 text-right font-bold">{formatCurrency(p.transferDetails?.coachTransfer)}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-700 text-right font-medium">{formatCurrency(p.amountDetails?.totalAmount)}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 text-right font-bold">{formatCurrency(p.amountDetails?.clubFee)}</td>
                                         </tr>
                                     ))}
                                 </tbody>

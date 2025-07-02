@@ -32,9 +32,113 @@ const ErrorStateDisplay = ({ message, onRetry }) => ( <div className="min-h-[30v
 const NotFoundDisplay = ({ itemType = "Club" }) => ( <div className="min-h-[30vh] flex flex-col items-center justify-center bg-white p-8 rounded-xl shadow-lg text-center"><span className="text-4xl mb-4">❓</span><p className="text-xl font-semibold text-slate-700 mb-2">{itemType} Not Found</p><p className="text-slate-500 mb-6">We couldn't find the {itemType.toLowerCase()} you're looking for.</p><Link to="/" className="px-6 py-2.5 text-sm font-medium text-white bg-sky-600 rounded-lg hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">Browse Clubs</Link></div> );
 const currency = 'INR';
 
-// --- All Modal components remain the same ---
-const PayAndEnrollModal = ({ isOpen, onClose, club, platformFee, onConfirmEnrollment, processingEnrollment }) => { /* ... no changes ... */ };
-const ChoosePaymentMethodModal = ({ isOpen, onClose, onOnline, onOffline, processing }) => { /* ... no changes ... */ };
+
+const PayAndEnrollModal = ({ isOpen, onClose, club, platformFee, onConfirmEnrollment, processingEnrollment }) => {
+    if (!isOpen || !club) return null;
+
+    const clubFee = (club.groundFees?.amount || 0) + (club.coachingFees?.amount || 0);
+    const platformFeeWithGst = platformFee + Math.round(platformFee * 0.18);
+    const totalFees = clubFee + platformFeeWithGst;
+    const currency = 'INR';
+
+    return (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] flex justify-center items-center p-4 transition-opacity duration-300">
+            <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md transform transition-all duration-300 scale-100">
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-semibold text-slate-800">Online Payment for {club.name}</h2>
+                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100"><CloseIcon /></button>
+                </div>
+
+                <div className="space-y-3 text-sm text-slate-700 mb-6">
+                    {clubFee > 0 && 
+                        <div className="flex justify-between">
+                            <span>Club Fees:</span>
+                            <span className="font-medium">{clubFee.toLocaleString()} {currency}</span>
+                        </div>
+                    }
+                    {platformFee > 0 && 
+                        <div className="flex justify-between">
+                            <span>Platform Fee (incl. taxes):</span>
+                            <span className="font-medium">{platformFeeWithGst.toLocaleString()} {currency}</span>
+                        </div>
+                    }
+                    <div className="flex justify-between border-t pt-3 mt-3 font-semibold text-base">
+                        <span>Total Payable:</span>
+                        <span>{totalFees.toLocaleString()} {currency}</span>
+                    </div>
+                    {totalFees === 0 && 
+                        <p className="text-center text-green-600 font-medium py-2">This is a free enrollment!</p>
+                    }
+                </div>
+
+                <div className="flex justify-end space-x-3">
+                    <button 
+                        type="button" 
+                        onClick={onClose} 
+                        disabled={processingEnrollment} 
+                        className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:opacity-70"
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        type="button" 
+                        onClick={onConfirmEnrollment} 
+                        disabled={processingEnrollment} 
+                        className="px-4 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 flex items-center disabled:bg-sky-400 disabled:cursor-not-allowed"
+                    >
+                         {processingEnrollment ? (
+                            <>
+                                <span className="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full"></span>
+                                <span>Processing...</span>
+                            </>
+                         ) : (
+                            <>
+                                <CreditCardIcon className="w-4 h-4 mr-2"/>
+                                Pay & Enroll
+                            </>
+                         )}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const ChoosePaymentMethodModal = ({ isOpen, onClose, onOnline, onOffline, processing }) => {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] flex justify-center items-center p-4">
+            <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm text-center">
+                <h2 className="text-xl font-semibold text-slate-800 mb-4">Choose Enrollment Method</h2>
+                <p className="text-sm text-slate-600 mb-6">You can pay securely online or request to pay the coach directly in cash.</p>
+                <div className="flex flex-col space-y-3">
+                    <button 
+                        onClick={onOnline} 
+                        disabled={processing} 
+                        className="w-full flex justify-center items-center py-2.5 px-4 text-base font-medium rounded-lg text-white bg-sky-600 hover:bg-sky-700 disabled:bg-sky-400"
+                    >
+                        Pay Online
+                    </button>
+                    <button 
+                        onClick={onOffline} 
+                        disabled={processing} 
+                        className="w-full flex justify-center items-center py-2.5 px-4 text-base font-medium rounded-lg text-slate-700 bg-slate-200 hover:bg-slate-300 disabled:bg-slate-300"
+                    >
+                        {processing ? 'Processing...' : 'Request Offline Payment'}
+                    </button>
+                </div>
+                <button 
+                    onClick={onClose} 
+                    disabled={processing} 
+                    className="mt-6 text-sm text-slate-500 hover:text-slate-700"
+                >
+                    Cancel
+                </button>
+            </div>
+        </div>
+    );
+};
 
 const ClubDetailPage = () => {
     // --- All state, hooks, and functions remain the same up to the shareDetails hook ---
@@ -216,9 +320,16 @@ const ClubDetailPage = () => {
     };
 
     const canEnroll = useMemo(() => {
-        if (!user || user.role !== 'Player') return false;
-        if (!currentUserEnrollment || currentUserEnrollment.status === 'expired') return true;
+    if (!user) {
+        return true;
+    }
+    if (user.role !== 'Player') {
         return false;
+    }
+    if (!currentUserEnrollment || currentUserEnrollment.status === 'expired') {
+        return true;
+    }
+    return false;
     }, [user, currentUserEnrollment]);
 
     const isManagingCoachForThisClub = useMemo(() => user?.role === "Coach" && user.isApproved && club && user.managedClub?._id === club._id, [user, club]);
@@ -261,7 +372,7 @@ const ClubDetailPage = () => {
         // The main message body for platforms like WhatsApp, Telegram, and as a quote for Facebook.
         // Emojis and newlines make it much more readable and engaging.
         const detailedBody = [
-            `Hey! 👋 Check out this awesome football club I found on Goal Zone:`,
+            `Hey! 👋 Check out this awesome football club I found on Footballkhelo.in:`,
             '',
             `⚽ ${clubName}`,
             coachInfo,
@@ -274,7 +385,7 @@ const ClubDetailPage = () => {
         ].filter(line => line !== '').join('\n');
         
         // A shorter title for Twitter
-        const conciseTitle = `Join ${club.name} on Goal Zone! Coached by ${club.coach?.name || 'a top coach'}. #Football #Training #GoalZone`;
+        const conciseTitle = `Join ${club.name} on Footballkhelo.in Coached by ${club.coach?.name || 'a top coach'}. #Football #Training #Footballkhelo.in`;
 
         return {
             detailedBody,

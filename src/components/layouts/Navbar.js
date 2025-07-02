@@ -1,6 +1,6 @@
 // client/src/components/layout/Navbar.js
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext.js";
 import api from "../../services/api.js";
 import { toast } from "react-toastify";
@@ -55,7 +55,7 @@ const getDashboardPath = (user) => {
 const Navbar = ({ registerPushNotifications }) => {
   const { user, logout, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-
+  const location = useLocation();
   // --- UI State ---
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const mobileMenuRef = useRef(null);
@@ -193,6 +193,13 @@ const Navbar = ({ registerPushNotifications }) => {
     setUnreadCount(0);
   }, []);
 
+  const isCoachOnDashboardPage = user?.role === 'Coach' && location.pathname.includes('/dashboard');
+
+  const handleLogoClick = (event) => {
+    if (isCoachOnDashboardPage) {
+      event.preventDefault();
+    }
+  };
 
   const isCoach = user && user.role === 'Coach';
   const shouldShowMainLinks = !user || user.role === "Player";
@@ -231,7 +238,11 @@ const Navbar = ({ registerPushNotifications }) => {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className={`flex items-center ${isCoach ? 'ml-16' : 'ml-0'} md:ml-0 transition-all duration-300`}>
-              <Link to="/" className="text-2xl font-extrabold text-sky-600 hover:text-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 rounded-sm transition-colors" aria-label="GoalZone Home">
+              <Link 
+                to={user?.role === 'Coach' ? '#' : '/'} 
+                className="text-2xl font-extrabold text-sky-600 hover:text-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 rounded-sm transition-colors" 
+                aria-label="Footballkhelo.in Home"
+              >
                 <img src={logo} alt="logo" className="h-7 w-46" />
               </Link>
             </div>

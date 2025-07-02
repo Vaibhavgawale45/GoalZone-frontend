@@ -52,13 +52,13 @@ const ContactUsPage = () => {
 
                 <div className="mt-10 mb-10 py-6 border-t border-b border-gray-200">
                     <div className="flex flex-col md:flex-row justify-center items-center gap-6 md:gap-12">
-                        <a href="mailto:support@goalzone.com" className="flex items-center text-gray-700 hover:text-blue-600 transition-colors duration-300 group">
+                        <a href="mailto:footballkhelo45@gmail.com" className="flex items-center text-gray-700 hover:text-blue-600 transition-colors duration-300 group">
                             <FiMail className="w-5 h-5 mr-3 text-gray-400 group-hover:text-blue-500 transition-colors" />
-                            <span className="font-medium">support@goalzone.com</span>
+                            <span className="font-medium">footballkhelo45@gmail.com</span>
                         </a>
                         <a href="tel:+1-234-567-8900" className="flex items-center text-gray-700 hover:text-blue-600 transition-colors duration-300 group">
                             <FiPhone className="w-5 h-5 mr-3 text-gray-400 group-hover:text-blue-500 transition-colors" />
-                            <span className="font-medium">+1 (234) 567-8900</span>
+                            <span className="font-medium">9552769804</span>
                         </a>
                     </div>
                 </div>

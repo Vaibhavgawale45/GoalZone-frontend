@@ -66,7 +66,7 @@ const Footer = () => {
           {/* Column 1: Brand Info & Socials */}
           <div className="space-y-4 sm:col-span-2 lg:col-span-1"> {/* On small screens, this takes full width */}
             <Link to="/" className="inline-block">
-              <img src={logowhite} alt="GoalZone Logo" className="h-8 w-auto" />
+              <img src={logowhite} alt="Footballkhelo.in Logo" className="h-8 w-auto" />
             </Link>
             <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
               Connecting the football world, one goal at a time. Find clubs, manage teams, and showcase talent.
@@ -92,7 +92,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-slate-700 pt-8 mt-12 text-center text-sm text-slate-400">
-          <p>© {currentYear} GoalZone. All rights reserved. Developed with passion.</p>
+          <p>© {currentYear} Footballkhelo.in All rights reserved. Developed with passion.</p>
         </div>
       </div>
     </footer>

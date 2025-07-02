@@ -218,7 +218,8 @@ function App({registerPushNotifications}) {
                 <Route path="/admin/feedbacks" element={<FeedbackListPage />} />
               </Route>
           </Routes>
-          <Footer />
+          {user?.role !== 'Coach' && <Footer />}
+
           
           <ToastContainer
             position="top-right"

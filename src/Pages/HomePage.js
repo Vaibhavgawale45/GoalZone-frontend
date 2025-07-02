@@ -101,13 +101,13 @@ const HomePage = () => {
             <span className="inline-block align-middle">
               <img
                 src={logowhite}
-                alt="GoalZone Logo"
+                alt="Footballkhelo.in Logo"
                 className="h-10 sm:h-12 md:h-14 lg:h-16 w-auto"
               />
             </span>
           </h1>
           <p className="max-w-3xl mx-auto text-lg sm:text-xl text-slate-200 mb-12 leading-relaxed drop-shadow-md">
-            Discover, manage, and excel in the world of football. GoalZone
+            Discover, manage, and excel in the world of football. Footballkhelo.in
             connects players, coaches, and clubs in one dynamic platform.
           </p>
           <motion.div
@@ -217,7 +217,7 @@ const HomePage = () => {
               Platform Features
             </h2>
             <p className="mt-4 text-lg text-slate-600 max-w-2xl mx-auto">
-              GoalZone is packed with tools to enhance your football experience.
+              Footballkhelo.in is packed with tools to enhance your football experience.
             </p>
           </motion.div>
 
@@ -265,7 +265,7 @@ const HomePage = () => {
               <FeatureCard
                 IconComponent={TrophyIcon}
                 title="Tournament Participation"
-                description="Discover and participate in tournaments hosted by clubs on GoalZone."
+                description="Discover and participate in tournaments hosted by clubs on Footballkhelo.in."
                 iconClassName="text-teal-600 group-hover:text-teal-700"
               />
             </motion.div>
