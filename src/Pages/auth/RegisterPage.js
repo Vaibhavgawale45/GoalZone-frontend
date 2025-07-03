@@ -1,8 +1,9 @@
 // client/src/Pages/auth/RegisterPage.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext.js'; // Adjust path as needed
-import { toast } from 'react-toastify'; // Import toast
+import { useAuth } from '../../contexts/AuthContext.js';
+import { toast } from 'react-toastify';
+import { FiAlertTriangle } from 'react-icons/fi';
 
 const RegisterPage = () => {
   const [name, setName] = useState('');
@@ -15,19 +16,16 @@ const RegisterPage = () => {
   const [imageUrl, setImageUrl] = useState('');
 
   const [loading, setLoading] = useState(false);
-  
-  const { register, user: authUser, setUser: setAuthUser } = useAuth(); // Get setUser also
+
+  const { register, user: authUser, setUser: setAuthUser, dashboardPath } = useAuth();
   const navigate = useNavigate();
 
-  // This useEffect handles redirection if authUser state changes (e.g., player logs in)
+  // This useEffect is still useful for post-registration redirects
   useEffect(() => {
     if (authUser && authUser.role === 'Player') {
-        console.log("[RegisterPage useEffect] Player logged in, navigating to dashboard.");
-        // No toast here, as successful registration toast is in handleSubmit
-        navigate('/player/dashboard', { replace: true });
+      // This will now primarily handle the redirect *after* a successful registration,
+      // as the render block below prevents already-logged-in users from seeing the form.
     }
-    // We don't navigate for Coach here based on authUser change,
-    // because they don't auto-login and handleSubmit directs them to /pending-approval.
   }, [authUser, navigate]);
 
   const handleSubmit = async (e) => {
@@ -43,55 +41,71 @@ const RegisterPage = () => {
       toast.error("Password must be at least 6 characters."); return;
     }
 
-    setLoading(true); // Set loading to true BEFORE the API call
-    let registrationSuccessful = false; // Flag to track success
+    setLoading(true);
 
     try {
-      const userData = { name, email, password, role };
+      const userData = { name, email, password, role, phone, imageUrl };
       if (role === 'Coach') userData.clubNameRegistered = clubNameRegistered;
-      if (phone.trim()) userData.phone = phone.trim();
-      if (imageUrl.trim()) userData.imageUrl = imageUrl.trim();
-      
-      console.log("[RegisterPage FE] Sending data for registration:", userData);
-      const registeredUserResponse = await register(userData); // This is from AuthContext
-      console.log("[RegisterPage FE] Response from register function:", registeredUserResponse);
 
+      const registeredUserResponse = await register(userData);
 
-      if (registeredUserResponse && registeredUserResponse._id) { // Check for a valid user object
-        registrationSuccessful = true; // Mark as successful
-
+      if (registeredUserResponse && registeredUserResponse._id) {
         if (registeredUserResponse.role === 'Player') {
           toast.success("Registration successful! Welcome!");
-          // AuthContext's register should have called setAuthUser,
-          // which will trigger the useEffect for player navigation.
-          // If not, you might need:
-          // setAuthUser(registeredUserResponse); // Explicitly set user in context if register action doesn't do it
-          // navigate('/player/dashboard', { replace: true }); // And direct navigate
+          navigate('/player/dashboard', { replace: true });
         } else if (registeredUserResponse.role === 'Coach') {
           toast.info("Registration successful! Your account is pending admin approval.");
           navigate('/pending-approval', { replace: true });
-        } else { // Fallback for other roles or undefined role from backend
+        } else {
           toast.success("Registration successful!");
           navigate('/login', { replace: true });
         }
       } else {
-        // This means `register()` from AuthContext might have succeeded partially 
-        // or didn't return the expected user object.
-        console.warn("[RegisterPage FE] Registration Response was not as expected:", registeredUserResponse);
         toast.warn("Registration submitted. If you encounter issues, please try logging in or contact support.");
-         // Don't navigate immediately; let user see the warning. setLoading(false) will happen.
-         // OR navigate('/login', {replace: true}); if that's preferred
       }
     } catch (err) {
-      console.error("Registration page error in handleSubmit catch:", err);
       toast.error(err.message || 'Registration failed. Please try again.');
-      registrationSuccessful = false; // Explicitly mark as failed
     } finally {
-      console.log("[RegisterPage FE] handleSubmit finally block reached. registrationSuccessful:", registrationSuccessful);
-      setLoading(false); // CRITICAL: ALWAYS set loading to false
+      setLoading(false);
     }
   };
 
+  // --- GATEKEEPER FOR ALREADY LOGGED-IN USERS ---
+  // If the user is already logged in, show an info message instead of the form.
+  if (authUser) {
+    return (
+      <div className="min-h-[calc(100vh-10rem)] flex items-center justify-center bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-lg w-full space-y-6 bg-white p-10 rounded-xl shadow-lg text-center">
+          <FiAlertTriangle className="mx-auto h-12 w-12 text-amber-500" />
+          <h2 className="text-2xl font-bold text-gray-900">
+            You are already logged in
+          </h2>
+          <p className="text-gray-600">
+            You cannot register a new account while you are signed in as <span className="font-semibold">{authUser.email}</span>.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 pt-4">
+             <Link
+              to={dashboardPath}
+              className="btn-primary w-full" // Use the same style as the register button
+            >
+              Go to My Dashboard
+            </Link>
+            <Link
+              to="/"
+              className="group relative w-full flex justify-center py-3 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              Go to Home Page
+            </Link>
+          </div>
+        </div>
+        <style jsx global>{`
+          .btn-primary { @apply group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-400; }
+        `}</style>
+      </div>
+    );
+  }
+
+  // --- REGISTRATION FORM (for logged-out users) ---
   return (
     <div className="min-h-[calc(100vh-10rem)] flex items-center justify-center bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-lg w-full space-y-8 bg-white p-10 rounded-xl shadow-lg">
@@ -101,8 +115,6 @@ const RegisterPage = () => {
           </h2>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {/* Removed local error div as toasts handle feedback */}
-
           <div>
             <label htmlFor="name-register" className="label-style">Full Name*</label>
             <input id="name-register" name="name" type="text" required value={name} onChange={(e) => setName(e.target.value)}
@@ -143,11 +155,10 @@ const RegisterPage = () => {
                 className="input-style" placeholder="e.g., City Rovers FC" disabled={loading} />
             </div>
           )}
-          {role === 'Player' && ( 
+          {role === 'Player' && (
             <div className="pt-4 border-t mt-4">
                 <h3 className="text-md font-medium text-gray-700 mb-3">Optional Information</h3>
                 <div className="space-y-4">
-                    
                     <div>
                         <label htmlFor="imageUrl-register" className="label-style">Profile Image URL</label>
                         <input id="imageUrl-register" name="imageUrl" type="url" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)}
@@ -160,18 +171,9 @@ const RegisterPage = () => {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-400 disabled:cursor-not-allowed"
+              className="btn-primary"
             >
-              {loading ? (
-                <>
-                  <svg className="animate-spin h-5 w-5 mr-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Registering...
-                </>) : 
-                (`Register as ${role}`)
-              }
+              {loading ? 'Registering...' : `Register as ${role}`}
             </button>
           </div>
         </form>
@@ -185,7 +187,7 @@ const RegisterPage = () => {
         .input-style { @apply mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm; }
         .label-style { @apply block text-sm font-medium text-gray-700; }
         .btn-primary { @apply group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-400; }
-        select.input-style { @apply pr-10; } 
+        select.input-style { @apply pr-10; }
       `}</style>
     </div>
   );

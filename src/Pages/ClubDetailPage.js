@@ -28,7 +28,6 @@ const ShareIcon = ({ className = "w-4 h-4 inline-block mr-1.5 text-slate-500" })
 const CreditCardIcon = ({ className = "w-5 h-5" }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={className}><path d="M2.5 4.5a3 3 0 00-3 3v6a3 3 0 003 3h15a3 3 0 003-3v-6a3 3 0 00-3-3h-15z" /><path d="M20 7H0v-.5A2.5 2.5 0 012.5 4h15A2.5 2.5 0 0120 6.5V7zM6 14a1 1 0 11-2 0 1 1 0 012 0zm4 0a1 1 0 11-2 0 1 1 0 012 0z" /></svg>;
 const CloseIcon = ({ className = "w-5 h-5" }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={className}><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" /></svg>;
 const LoadingSpinner = ({text = "Loading..."}) => <div role="status" className="text-center p-4"><p className="text-slate-600 animate-pulse">{text}</p></div>;
-const ErrorStateDisplay = ({ message, onRetry }) => ( <div className="min-h-[30vh] flex flex-col items-center justify-center bg-white p-8 rounded-xl shadow-lg text-center"><span className="text-4xl mb-4">⚠️</span><p className="text-xl font-semibold text-red-700 mb-2">Oops! Something Went Wrong</p><p className="text-slate-600 mb-6 max-w-md">{message}</p>{onRetry && <button onClick={onRetry} className="px-6 py-2.5 text-sm font-medium text-white bg-sky-600 rounded-lg hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">Try Again</button>}</div> );
 const NotFoundDisplay = ({ itemType = "Club" }) => ( <div className="min-h-[30vh] flex flex-col items-center justify-center bg-white p-8 rounded-xl shadow-lg text-center"><span className="text-4xl mb-4">❓</span><p className="text-xl font-semibold text-slate-700 mb-2">{itemType} Not Found</p><p className="text-slate-500 mb-6">We couldn't find the {itemType.toLowerCase()} you're looking for.</p><Link to="/" className="px-6 py-2.5 text-sm font-medium text-white bg-sky-600 rounded-lg hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">Browse Clubs</Link></div> );
 const currency = 'INR';
 
@@ -141,9 +140,8 @@ const ChoosePaymentMethodModal = ({ isOpen, onClose, onOnline, onOffline, proces
 };
 
 const ClubDetailPage = () => {
-    // --- All state, hooks, and functions remain the same up to the shareDetails hook ---
     const { clubId } = useParams();
-    const { user, loading: authLoading } = useAuth();
+    const { user, loading: authLoading, dashboardPath } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -158,9 +156,9 @@ const ClubDetailPage = () => {
     const [currentCarouselImageIndex, setCurrentCarouselImageIndex] = useState(0);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const carouselIntervalRef = useRef(null);
-    
-    // --- All fetch logic, handlers, etc. are unchanged ---
-    // ... fetchPageData, handleClubUpdated, nextImage, prevImage, etc.
+
+    const ErrorStateDisplay = ({ message, onRetry }) => ( <div className="min-h-[30vh] flex flex-col items-center justify-center bg-white p-8 rounded-xl shadow-lg text-center"><span className="text-4xl mb-4">⚠️</span><p className="text-xl font-semibold text-red-700 mb-2">Oops! Something Went Wrong</p><p className="text-slate-600 mb-6 max-w-md">{message}</p>{onRetry && <button onClick={navigate(dashboardPath)} className="px-6 py-2.5 text-sm font-medium text-white bg-sky-600 rounded-lg hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">Go to My Dashboard</button>}</div> );
+
     const fetchPageData = useCallback(async () => {
         setLoading(true);
         setError("");
@@ -411,13 +409,7 @@ const ClubDetailPage = () => {
     const enrollButtonText = currentUserEnrollment && currentUserEnrollment.status === 'expired' ? 'Renew Enrollment' : 'Enroll in Club';
 
     return (
-        <div className={`flex flex-col ${isManagingCoachForThisClub ? "md:flex-row" : ""} min-h-screen-minus-nav bg-slate-100`}>
-            {isManagingCoachForThisClub && (
-                <aside className="w-full md:w-60 lg:w-64 xl:w-72 bg-white md:bg-slate-50 border-r border-slate-200 md:min-h-screen-minus-nav shadow-sm print:hidden flex-shrink-0">
-                    <ClubPageSidebar clubId={club._id} />
-                </aside>
-            )}
-            
+        <div className={`flex flex-col ${isManagingCoachForThisClub ? "md:flex-row" : ""} min-h-screen-minus-nav bg-slate-100`}>          
             <main className={`w-full overflow-y-auto ${isManagingCoachForThisClub ? "md:flex-grow" : ""}`}>
                 <section className="relative bg-slate-800 text-white group">
                     <div className="absolute inset-0 opacity-40 group-hover:opacity-50 transition-opacity duration-300">

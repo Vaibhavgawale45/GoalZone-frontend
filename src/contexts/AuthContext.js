@@ -1,5 +1,5 @@
 // client/src/contexts/AuthContext.js
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useMemo } from 'react';
 import api from '../services/api.js'; // Use your configured axios instance
 
 const AuthContext = createContext(null);
@@ -62,8 +62,35 @@ export const AuthProvider = ({ children }) => {
     // Optionally navigate to login or home page: navigate('/login'); (if navigate is available here)
   };
 
+  const getDashboardPath = (user) => {
+  if (!user) {
+    // Default for guests is the login page.
+    return "/login";
+  }
+
+  switch (user.role) {
+    case "Admin":
+      return "/admin/dashboard";
+    case "Coach":
+      // A coach's dashboard path might depend on whether they manage a club.
+      if (user.isApproved && user.managedClub?._id) {
+        // If they manage a club, their main dashboard IS the club dashboard.
+        return `/club/${user.managedClub._id}/dashboard`; 
+      }
+      return "/coach/dashboard"; // A generic dashboard for coaches without a club yet.
+    case "Player":
+      return "/player/dashboard";
+    default:
+      // A fallback for any other case, returning to the homepage is safe.
+      return "/";
+  }
+};
+
+  const dashboardPath = useMemo(() => getDashboardPath(user), [user]);
+
+
   return (
-    <AuthContext.Provider value={{ user, setUser, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, setUser, login, register, logout, loading, dashboardPath }}>
       {!loading && children}
     </AuthContext.Provider>
   );

@@ -239,7 +239,7 @@ const Navbar = ({ registerPushNotifications }) => {
           <div className="flex items-center justify-between h-16">
             <div className={`flex items-center ${isCoach ? 'ml-16' : 'ml-0'} md:ml-0 transition-all duration-300`}>
               <Link 
-                to={user?.role === 'Coach' ? '#' : '/'} 
+                to='/' 
                 className="text-2xl font-extrabold text-sky-600 hover:text-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 rounded-sm transition-colors" 
                 aria-label="Footballkhelo.in Home"
               >
