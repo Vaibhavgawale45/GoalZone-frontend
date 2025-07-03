@@ -68,7 +68,7 @@ export const AuthProvider = ({ children }) => {
     return "/login";
   }
 
-  switch (user.role) {
+  switch (user?.role) {
     case "Admin":
       return "/admin/dashboard";
     case "Coach":
