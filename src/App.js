@@ -130,11 +130,11 @@ function App({registerPushNotifications}) {
     <AuthProvider>
       <Router>
         <div className="flex flex-col min-h-screen bg-slate-100 text-slate-800">
-          {/* {isCoach &&(
+          {isCoach &&(
         <aside className="w-full md:w-60 lg:w-64 xl:w-72 bg-white md:bg-slate-50 border-r border-slate-200 md:min-h-screen-minus-nav shadow-sm print:hidden flex-shrink-0 block md:hidden">
           <ClubPageSidebar />
         </aside>
-         )} */}
+         )}
           <Navbar registerPushNotifications={registerPushNotifications} /> 
           <Routes>
             {/* Public Routes */}
