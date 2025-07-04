@@ -1,5 +1,5 @@
 // client/src/App.js
-import {useEffect} from "react";
+import {useEffect, useState} from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -58,7 +58,7 @@ import AdminSendNotificationPage from "./Pages/admin/AdminSendNotificationPage.j
 import PlatformSettings from "./Pages/admin/PlatformSettings.js";
 import CoachPayoutSettings from "./components/coach/CoachPayoutSettings.js";
 import CoachPaymentsDashboard from "./Pages/dashboards/coach/CoachPaymentsDashboard.js";
-
+import InstallPwaToast from "./components/common/InstallPwaToast.js"; 
 
 const PostLoginRedirect = () => {
   const { user, loading } = useAuth();
@@ -115,6 +115,33 @@ const MainContentWrapper = ({ children }) => {
 function App({registerPushNotifications}) {
   const { user, loading: authLoading } = useAuth();
   const isCoach = user?.role === 'Coach';
+
+  const [installPromptEvent, setInstallPromptEvent] = useState(null);
+
+  // 2. useEffect to capture the 'beforeinstallprompt' event.
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (event) => {
+      // Prevent the default mini-infobar from appearing on mobile.
+      event.preventDefault();
+      // Store the event so we can trigger it later.
+      setInstallPromptEvent(event);
+      console.log('PWA install event captured.');
+    };
+
+    // Add the event listener.
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    // Cleanup: remove the event listener when the app unmounts.
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []); // The empty array ensures this effect runs only once.
+
+  // 3. A handler to dismiss the toast.
+  const handleDismissToast = () => {
+    setInstallPromptEvent(null);
+  };
+
 
   useEffect(() => {
     if (!authLoading && user && registerPushNotifications) {
@@ -237,6 +264,13 @@ function App({registerPushNotifications}) {
             pauseOnHover
             theme="colored"
           />
+
+          {installPromptEvent && (
+        <InstallPwaToast 
+          installPromptEvent={installPromptEvent} 
+          onDismiss={handleDismissToast} 
+        />
+      )}
         </div>
       </Router>
     </AuthProvider>
