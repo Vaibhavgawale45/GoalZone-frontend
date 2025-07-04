@@ -59,6 +59,7 @@ import PlatformSettings from "./Pages/admin/PlatformSettings.js";
 import CoachPayoutSettings from "./components/coach/CoachPayoutSettings.js";
 import CoachPaymentsDashboard from "./Pages/dashboards/coach/CoachPaymentsDashboard.js";
 import InstallPwaToast from "./components/common/InstallPwaToast.js"; 
+import NotificationPermissionModal from "./components/common/NotificationPermissionToast.js";
 
 const PostLoginRedirect = () => {
   const { user, loading } = useAuth();
@@ -117,29 +118,65 @@ function App({registerPushNotifications}) {
   const isCoach = user?.role === 'Coach';
 
   const [installPromptEvent, setInstallPromptEvent] = useState(null);
+  const [isNotificationPermissionRequired, setIsNotificationPermissionRequired] = useState(false);
 
-  // 2. useEffect to capture the 'beforeinstallprompt' event.
   useEffect(() => {
     const handleBeforeInstallPrompt = (event) => {
-      // Prevent the default mini-infobar from appearing on mobile.
       event.preventDefault();
-      // Store the event so we can trigger it later.
       setInstallPromptEvent(event);
-      console.log('PWA install event captured.');
     };
-
-    // Add the event listener.
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
 
-    // Cleanup: remove the event listener when the app unmounts.
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
-  }, []); // The empty array ensures this effect runs only once.
+  // --- Main PWA Installation Handler ---
+  const handlePwaInstall = async () => {
+    if (!installPromptEvent) return;
+    
+    installPromptEvent.prompt();
+    setInstallPromptEvent(null); // Hide the install toast
+    const choiceResult = await installPromptEvent.userChoice;
 
-  // 3. A handler to dismiss the toast.
-  const handleDismissToast = () => {
-    setInstallPromptEvent(null);
+    if (choiceResult.outcome === 'accepted') {
+      console.log('User accepted the PWA installation.');
+      
+      // Before showing our modal, check the current permission status.
+      // This handles cases where the user already granted/denied permission.
+      if (Notification.permission === 'default') {
+        // 'default' means the user hasn't been asked yet. This is the main path.
+        setIsNotificationPermissionRequired(true);
+      } else if (Notification.permission === 'denied') {
+        // If they already denied it, we can't ask again.
+        // You might want to show a message explaining how to enable it in browser settings.
+        console.log('Notification permission was previously denied.');
+      } else {
+        // If it's already 'granted', we don't need to do anything.
+        console.log('Notification permission was already granted.');
+      }
+    }
+  };
+
+  // --- Notification Permission Handler ---
+  // This function is passed to the blocking modal.
+  const handleRequestNotificationPermission = async () => {
+    try {
+      // Show the native browser prompt
+      const permissionResult = await Notification.requestPermission();
+      
+      // IMPORTANT: Hide the modal regardless of the user's choice.
+      setIsNotificationPermissionRequired(false);
+
+      if (permissionResult === 'granted') {
+        console.log('Notification permission granted! App is now fully usable.');
+        // You can now proceed with push subscription logic.
+      } else {
+        console.log('User denied notification permission. App is still usable.');
+        // You could show a small, non-blocking toast saying "You can enable notifications later in settings."
+      }
+    } catch (error) {
+      console.error('Error requesting notification permission:', error);
+      setIsNotificationPermissionRequired(false); // Ensure modal is hidden on error
+    }
   };
 
 
@@ -156,8 +193,13 @@ function App({registerPushNotifications}) {
   return (
     <AuthProvider>
       <Router>
-        <div className="flex flex-col min-h-screen bg-slate-100 text-slate-800">
-          {isCoach &&(
+      <div 
+        className={`
+          flex flex-col min-h-screen bg-slate-100 text-slate-800
+          ${isNotificationPermissionRequired ? 'blur-sm pointer-events-none' : ''}
+        `}
+       >          
+       {isCoach &&(
         <aside className="w-full md:w-60 lg:w-64 xl:w-72 bg-white md:bg-slate-50 border-r border-slate-200 md:min-h-screen-minus-nav shadow-sm print:hidden flex-shrink-0 block md:hidden">
           <ClubPageSidebar />
         </aside>
@@ -265,13 +307,20 @@ function App({registerPushNotifications}) {
             theme="colored"
           />
 
-          {installPromptEvent && (
-        <InstallPwaToast 
-          installPromptEvent={installPromptEvent} 
-          onDismiss={handleDismissToast} 
-        />
+          {/* The PWA install toast will appear here as usual */}
+        {installPromptEvent && (
+          <InstallPwaToast 
+            onInstall={handlePwaInstall}
+            onDismiss={() => setInstallPromptEvent(null)}
+          />
+        )}
+      </div>
+
+      {/* 2. THE BLOCKING MODAL - It only renders when required */}
+      {isNotificationPermissionRequired && (
+        <NotificationPermissionModal onAllow={handleRequestNotificationPermission} />
       )}
-        </div>
+
       </Router>
     </AuthProvider>
   );

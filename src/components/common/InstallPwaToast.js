@@ -1,26 +1,19 @@
+// client/src/components/common/InstallPwaToast.js
+
 import React from 'react';
 import appIcon from '../../assets/app-icon.png';
 
-
-// This component receives the event and the function to hide the toast as props.
-const InstallPwaToast = ({ installPromptEvent, onDismiss }) => {
-
-  const handleInstallClick = async () => {
-    // If the event isn't available, do nothing.
-    if (!installPromptEvent) {
-      return;
-    }
-
-    // Show the browser's native install prompt.
-    installPromptEvent.prompt();
-
-    // The prompt can only be used once. After it's shown, we call onDismiss
-    // to hide our custom toast, because the event is now "used".
-    onDismiss();
+// This component is now simpler. It just needs to know what to do when
+// the "Install" or "Dismiss" buttons are clicked.
+// We rename the onDismiss prop to onInstall to be more descriptive.
+const InstallPwaToast = ({ onInstall, onDismiss }) => {
+  // The handleInstallClick function is now just a simple call to the onInstall prop.
+  // All the complex logic (like calling .prompt()) will live in App.js.
+  const handleInstallClick = () => {
+    onInstall();
   };
 
   const handleDismissClick = () => {
-    // Simply call the onDismiss function to hide the toast.
     onDismiss();
   };
 
@@ -44,13 +37,15 @@ const InstallPwaToast = ({ installPromptEvent, onDismiss }) => {
 
         {/* Right Side: Buttons */}
         <div className="flex flex-shrink-0 space-x-2">
-          <button
+          {/* Since you commented this out, I'll keep it that way. If you want it back, just uncomment it. */}
+          {/* <button
             onClick={handleDismissClick}
-            className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400"
+            className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
           >
             Later
-          </button>
+          </button> */}
           <button
+            // The onClick now calls our simplified handler.
             onClick={handleInstallClick}
             className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
