@@ -1,6 +1,6 @@
-// client/src/components/common/InstallPwaToast.js
-
 import React from 'react';
+import appIcon from '../../assets/app-icon.png';
+
 
 // This component receives the event and the function to hide the toast as props.
 const InstallPwaToast = ({ installPromptEvent, onDismiss }) => {
@@ -32,12 +32,12 @@ const InstallPwaToast = ({ installPromptEvent, onDismiss }) => {
         {/* Left Side: Icon and Text */}
         <div className="flex items-center space-x-3">
           <img 
-            src="/logo192.png" // Assumes your PWA icon is in the public folder
-            alt="App Logo" 
+            src={appIcon}
+            alt="App Icon" 
             className="w-12 h-12 flex-shrink-0" 
           />
           <div>
-            <strong className="font-semibold text-gray-900 block">Install the App</strong>
+            <strong className="font-semibold text-gray-900 block">Install the Footballkhelo.in App</strong>
             <p className="text-sm text-gray-600">Get the full experience on your device.</p>
           </div>
         </div>
