@@ -38,7 +38,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, children }) => {
 // --- Helper function for cleaner dashboard path logic ---
 const getDashboardPath = (user) => {
     if (!user) return "/redirect-dashboard";
-    switch (user.role) {
+    switch (user?.role) {
         case "Coach":
             if (user.isApproved && user.managedClub?._id) return `/club/${user.managedClub._id}/dashboard`;
             if (user.isApproved) return "/coach/dashboard";
@@ -195,14 +195,8 @@ const Navbar = ({ registerPushNotifications }) => {
 
   const isCoachOnDashboardPage = user?.role === 'Coach' && location.pathname.includes('/dashboard');
 
-  const handleLogoClick = (event) => {
-    if (isCoachOnDashboardPage) {
-      event.preventDefault();
-    }
-  };
-
-  const isCoach = user && user.role === 'Coach';
-  const shouldShowMainLinks = !user || user.role === "Player";
+  const isCoach = user && user?.role === 'Coach';
+  const shouldShowMainLinks = !user || user?.role === "Player";
   const dashboardPath = getDashboardPath(user);
 
   // --- Reusable Tailwind classes for consistency ---
@@ -320,7 +314,7 @@ const Navbar = ({ registerPushNotifications }) => {
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
               {shouldShowMainLinks && mainNavLinksMobile}
 
-              {user && user.role === 'Player' && (
+              {user && user?.role === 'Player' && (
                 <>
                     <hr className="my-2 border-slate-200" />
                     <Link

@@ -114,7 +114,7 @@ const MainContentWrapper = ({ children }) => {
 // --- App Component ---
 function App({registerPushNotifications}) {
   const { user, loading: authLoading } = useAuth();
-  const isCoach = user.role === 'Coach';
+  const isCoach = user?.role === 'Coach';
 
   useEffect(() => {
     if (!authLoading && user && registerPushNotifications) {

@@ -88,7 +88,7 @@ const ClubDashboard = () => {
       }
       setClub(fetchedClubData);
       setCurrentCarouselImageIndex(0);
-      if (user && user.role === "Player" && fetchedClubData.players) {
+      if (user && user?.role === "Player" && fetchedClubData.players) {
         setIsEnrolled(fetchedClubData.players.some((p) => p._id === user._id));
       }
     } catch (err) {
@@ -143,7 +143,7 @@ const ClubDashboard = () => {
       navigate("/login", { state: { from: location } });
       return;
     }
-    if (user.role === "Player" && club?._id) {
+    if (user?.role === "Player" && club?._id) {
       setEnrollmentLoading(true);
       try {
         await api.post("/enrollments", { clubId: club._id });
@@ -166,7 +166,7 @@ const ClubDashboard = () => {
   const showEnrollButton = !authLoading &&
                          club &&
                          user &&
-                         user.role === "Player" &&
+                         user?.role === "Player" &&
                          !isEnrolled &&
                          !isAdminUser &&
                          !isManagingCoachForThisClub;

@@ -75,7 +75,7 @@ const ClubPageSidebar = ({ clubId: clubIdInViewContext }) => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
 
-  if (!user || user.role !== 'Coach') {
+  if (!user || user?.role !== 'Coach') {
     return null; 
   }
 

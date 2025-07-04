@@ -156,7 +156,7 @@ const PlayerDashboardPage = () => {
                         />
                         <div className="text-center sm:text-left flex-grow">
                             <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">{dataToDisplay.name}</h1>
-                            <p className="text-slate-300 text-lg mt-1 capitalize">{dataToDisplay.role} Dashboard</p>
+                            <p className="text-slate-300 text-lg mt-1 capitalize">{dataToDisplay?.role} Dashboard</p>
                             <button onClick={() => setIsEditProfileModalOpen(true)} className="mt-5 inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-slate-800 bg-slate-100 rounded-lg shadow-md hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 focus:ring-offset-slate-800 transition-all">
                                 <FiEdit /> Edit My Profile
                             </button>

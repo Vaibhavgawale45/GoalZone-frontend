@@ -22,7 +22,7 @@ const RegisterPage = () => {
 
   // This useEffect is still useful for post-registration redirects
   useEffect(() => {
-    if (authUser && authUser.role === 'Player') {
+    if (authUser && authUser?.role === 'Player') {
       // This will now primarily handle the redirect *after* a successful registration,
       // as the render block below prevents already-logged-in users from seeing the form.
     }
@@ -50,10 +50,10 @@ const RegisterPage = () => {
       const registeredUserResponse = await register(userData);
 
       if (registeredUserResponse && registeredUserResponse._id) {
-        if (registeredUserResponse.role === 'Player') {
+        if (registeredUserResponse?.role === 'Player') {
           toast.success("Registration successful! Welcome!");
           navigate('/player/dashboard', { replace: true });
-        } else if (registeredUserResponse.role === 'Coach') {
+        } else if (registeredUserResponse?.role === 'Coach') {
           toast.info("Registration successful! Your account is pending admin approval.");
           navigate('/pending-approval', { replace: true });
         } else {

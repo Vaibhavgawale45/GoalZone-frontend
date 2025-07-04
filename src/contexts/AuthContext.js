@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await api.post('/auth/register', userData);
       // Only auto-login if not a coach (coaches need approval)
-      if (response.data.role !== 'Coach') {
+      if (response.data?.role !== 'Coach') {
         localStorage.setItem('token', response.data.token);
         setUser(response.data);
       }

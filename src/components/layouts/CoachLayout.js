@@ -19,7 +19,7 @@ const CoachLayout = () => {
     };
 
     const clubIdFromPath = getClubIdFromPath(location.pathname);
-    const isCoach = user && user.role === 'Coach';
+    const isCoach = user && user?.role === 'Coach';
 
     return (
         // The layout is a flex container

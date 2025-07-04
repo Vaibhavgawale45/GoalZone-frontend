@@ -231,7 +231,7 @@ const ClubDetailPage = () => {
             navigate("/login", { state: { from: location } });
             return;
         }
-        if (user.role !== "Player") {
+        if (user?.role !== "Player") {
             toast.warn("Only players can enroll in clubs.");
             return;
         }
@@ -321,7 +321,7 @@ const ClubDetailPage = () => {
     if (!user) {
         return true;
     }
-    if (user.role !== 'Player') {
+    if (user?.role !== 'Player') {
         return false;
     }
     if (!currentUserEnrollment || currentUserEnrollment.status === 'expired') {
